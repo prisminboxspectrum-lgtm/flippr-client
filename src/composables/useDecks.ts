@@ -11,9 +11,8 @@ import type { DeckDetail, DeckSummary } from '@/types/types';
 
 export const decks = ref<DeckSummary[]>([]);
 export const ready = ref(false);
-export const hasMore = ref(true); // track if more decks exist
+export const hasMore = ref(true);
 
-// Helper: convert detail → summary
 function toSummary(deck: DeckDetail): DeckSummary {
   return {
     id: deck.id,
@@ -27,10 +26,10 @@ function toSummary(deck: DeckDetail): DeckSummary {
 // Load decks in batches
 export async function loadDecksBatch(offset = 0, limit = 12) {
   try {
-    const response = await getDecks(offset, limit); // returns { decks, hasMore }
+    const response = await getDecks(offset, limit);
     const { decks: newDecks, hasMore: more } = response.data;
 
-    hasMore.value = more; // update reactive hasMore flag
+    hasMore.value = more;
     decks.value.push(...newDecks);
     ready.value = true;
   } catch (err) {
@@ -42,7 +41,7 @@ export async function loadDecksBatch(offset = 0, limit = 12) {
 export async function addDeck(deck: { title: string }) {
   try {
     const response = await createDeck(deck);
-    decks.value.unshift(response.data); // newest on top
+    decks.value.unshift(response.data);
     return response.data;
   } catch (err) {
     console.error('Failed to create deck:', err);
