@@ -20,9 +20,9 @@
 
       <!-- Search Decks -->
       <SearchInput
+        id="search-decks"
         v-model="deckSearch"
         placeholder="Search decks…"
-        id="search-decks"
         class="mb-4"
       />
 
@@ -51,7 +51,7 @@
         autofocus-selector="input"
         @close="showAddDeck = false"
       >
-        <form id="addDeckForm" @submit="submitDeck" class="space-y-4">
+        <form id="addDeckForm" class="space-y-4" @submit="submitDeck">
           <label for="deckTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-200">
             Deck Title <span class="text-red-600">*</span>
             <input
@@ -60,7 +60,7 @@
               type="text"
               required
               aria-required="true"
-              class="mt-1 w-full px-3 py-2 rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="form-control mt-1"
               placeholder="e.g. Physics"
               aria-label="Deck title"
             />
@@ -72,16 +72,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import Layout from '@/components/Layout.vue';
-import Deck from '@/components/Deck.vue';
+import { PlusIcon } from '@heroicons/vue/20/solid';
+import { onMounted, ref } from 'vue';
+
 import BaseButton from '@/components/BaseButton.vue';
 import BaseModal from '@/components/BaseModal.vue';
+import Deck from '@/components/Deck.vue';
+import Layout from '@/components/Layout.vue';
 import SearchInput from '@/components/SearchInput.vue';
-import { PlusIcon } from '@heroicons/vue/20/solid';
-import { useToast } from '@/composables/useToast';
-import { decks, addDeck, loadDecksBatch, hasMore } from '@/composables/useDecks';
+import { addDeck, decks, hasMore, loadDecksBatch } from '@/composables/useDecks';
 import { useSearchFilter } from '@/composables/useSearchFilter';
+import { useToast } from '@/composables/useToast';
 
 const { success, error: showError } = useToast();
 

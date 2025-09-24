@@ -16,7 +16,7 @@
       </p>
 
       <!-- Form -->
-      <form @submit.prevent="handleLogin" class="space-y-4">
+      <form class="space-y-4" @submit.prevent="handleLogin">
         <!-- Username -->
         <div>
           <label for="username" class="block text-sm font-medium mb-1"> Username </label>
@@ -26,7 +26,8 @@
             type="text"
             required
             autocomplete="username"
-            class="w-full px-3 py-2 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="form-control border border-gray-300 dark:border-gray-600"
+            aria-label="Username"
           />
         </div>
 
@@ -39,7 +40,8 @@
             type="password"
             required
             autocomplete="current-password"
-            class="w-full px-3 py-2 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="form-control border border-gray-300 dark:border-gray-600"
+            aria-label="Password"
           />
         </div>
 
@@ -59,7 +61,6 @@
           @click="handleLogin"
         />
       </form>
-      <!-- <hr class="border-t border-gray-200 dark:border-gray-700" /> -->
 
       <p class="text-sm text-center text-gray-600 dark:text-gray-400">
         New to Flippr?
@@ -75,10 +76,10 @@
 </template>
 
 <script setup lang="ts">
-import { useAuth } from '@/composables/useAuth';
-import BaseButton from '@/components/BaseButton.vue';
-
 import { onMounted } from 'vue';
+
+import BaseButton from '@/components/BaseButton.vue';
+import { useAuth } from '@/composables/useAuth';
 
 const { username, password, error, loading, login: handleLogin } = useAuth();
 

@@ -1,7 +1,7 @@
-// src/composables/useCards.ts
 import { ref } from 'vue';
+
+import { createCard, deleteCard, getCardsByDeck, updateCard } from '@/services/cardService';
 import type { Card, DeckDetail } from '@/types/types';
-import { createCard, updateCard, deleteCard, getCardsByDeck } from '@/services/cardService';
 
 export function useCards(deckId: string) {
   const cards = ref<Card[]>([]);

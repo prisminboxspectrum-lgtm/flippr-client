@@ -1,4 +1,4 @@
-import { ref, computed, type Ref } from 'vue';
+import { computed, type Ref, ref } from 'vue';
 
 export function useSearchFilter<T>(items: Ref<T[]>, fields: (keyof T)[]) {
   const query = ref('');

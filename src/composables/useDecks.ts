@@ -1,12 +1,13 @@
 import { ref } from 'vue';
-import type { DeckSummary, DeckDetail } from '@/types/types';
+
 import {
-  getDecks,
   createDeck,
-  updateDeck as updateDeckRequest,
   deleteDeck as deleteDeckRequest,
+  getDecks,
   getDeckWithCards,
+  updateDeck as updateDeckRequest,
 } from '@/services/deckService';
+import type { DeckDetail, DeckSummary } from '@/types/types';
 
 export const decks = ref<DeckSummary[]>([]);
 export const ready = ref(false);

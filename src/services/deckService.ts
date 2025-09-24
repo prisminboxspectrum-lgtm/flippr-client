@@ -1,5 +1,5 @@
+import type { DeckDetail, DeckSummary } from '@/types/types';
 import api from '@/utils/http';
-import type { DeckSummary, DeckDetail } from '@/types/types';
 
 export const getDecks = (skip = 0, limit = 12) => {
   return api.get<{ decks: DeckSummary[]; hasMore: boolean }>(`/decks?skip=${skip}&limit=${limit}`);

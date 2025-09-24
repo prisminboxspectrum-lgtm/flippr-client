@@ -1,6 +1,6 @@
 <template>
   <Layout>
-    <section aria-labelledby="manage-heading">
+    <section aria-labelledby="manage-heading" role="region">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6 gap-2 flex-wrap">
         <h1 id="manage-heading" class="text-xl font-semibold text-gray-800 dark:text-white">
@@ -30,9 +30,9 @@
                 </h2>
                 <button
                   type="button"
-                  @click="startEditingTitle"
                   class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 cursor-pointer"
                   aria-label="Rename deck"
+                  @click="startEditingTitle"
                 >
                   <PencilIcon class="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -40,13 +40,13 @@
 
               <template v-else>
                 <input
+                  ref="titleInput"
                   v-model="editedTitle"
                   type="text"
                   maxLength="50"
-                  class="text-lg font-semibold bg-transparent dark:bg-transparent focus:bg-gray-100 dark:focus:bg-gray-700 rounded px-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="form-control text-lg font-semibold bg-transparent dark:bg-transparent px-1"
                   @blur="saveTitle"
                   @keyup.enter="saveTitle"
-                  ref="titleInput"
                 />
               </template>
             </div>
@@ -77,9 +77,9 @@
 
       <!-- Search Cards -->
       <SearchInput
-        v-model="searchQuery"
-        placeholder="Search cards…"
         id="search-cards"
+        v-model="cardSearch"
+        placeholder="Search cards…"
         class="mb-4"
       />
 
@@ -121,16 +121,16 @@
               </td>
               <td class="px-4 py-3 text-right whitespace-nowrap">
                 <button
-                  @click="openEditCard(card)"
                   aria-label="Edit card"
                   class="p-1 text-blue-600 hover:text-blue-800 cursor-pointer"
+                  @click="openEditCard(card)"
                 >
                   <PencilIcon class="h-4 w-4" />
                 </button>
                 <button
-                  @click="deleteCard(card)"
                   aria-label="Delete card"
                   class="p-1 text-red-600 hover:text-red-800 ml-2 cursor-pointer"
+                  @click="deleteCard(card)"
                 >
                   <TrashIcon class="h-4 w-4" />
                 </button>
@@ -178,8 +178,8 @@
       :show-actions="true"
       confirm-label="Delete"
       cancel-label="Cancel"
-      @close="isDeleteOpen = false"
       form-id="deleteDeckForm"
+      @close="isDeleteOpen = false"
     >
       <form id="deleteDeckForm" @submit="deleteDeck">
         <p class="text-sm text-gray-700 dark:text-gray-300">
@@ -191,22 +191,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted } from 'vue';
+import { PencilIcon, PlusIcon, TrashIcon } from '@heroicons/vue/24/solid';
+import { nextTick, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import Layout from '@/components/Layout.vue';
+
+import BaseButton from '@/components/BaseButton.vue';
 import BaseModal from '@/components/BaseModal.vue';
 import CardForm from '@/components/CardForm.vue';
-import BaseButton from '@/components/BaseButton.vue';
+import Layout from '@/components/Layout.vue';
 import SearchInput from '@/components/SearchInput.vue';
-import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/solid';
-import { useToast } from '@/composables/useToast';
+import { useCards } from '@/composables/useCards';
 import {
-  fetchDeckWithCards,
   deleteDeck as deleteDeckFromStore,
+  fetchDeckWithCards,
   updateDeck as updateDeckInStore,
 } from '@/composables/useDecks';
 import { useSearchFilter } from '@/composables/useSearchFilter';
-import { useCards } from '@/composables/useCards';
+import { useToast } from '@/composables/useToast';
 import type { Card, DeckDetail } from '@/types/types';
 
 // Router + params
@@ -221,7 +222,7 @@ const deck = ref<DeckDetail | null>(null);
 const { cards, fetchCards, addCard, editCard, removeCard } = useCards(deckId);
 
 // Search filter (filter over cards)
-const { query: searchQuery, filtered: filteredCards } = useSearchFilter(cards, ['question']);
+const { query: cardSearch, filtered: filteredCards } = useSearchFilter(cards, ['question']);
 
 // Toast
 const { success, error: showError } = useToast();

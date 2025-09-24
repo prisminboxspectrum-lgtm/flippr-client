@@ -6,12 +6,13 @@
       role="dialog"
       aria-modal="true"
       :aria-labelledby="labelId"
+      tabindex="-1"
       @keydown.esc="emitClose"
     >
       <div
+        ref="modalContent"
         class="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-lg shadow-lg max-w-md w-full p-6"
         @click.stop
-        ref="modalContent"
       >
         <!-- Title -->
         <header v-if="title" :id="labelId" class="text-lg font-semibold mb-4">
@@ -27,15 +28,15 @@
         <footer v-if="showActions" class="mt-6 flex justify-end gap-2">
           <button
             type="button"
+            class="px-3 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded hover:bg-gray-300 dark:hover:bg-gray-600 cursor-pointer"
             @click="emitClose"
-            class="px-3 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
           >
             {{ cancelText }}
           </button>
           <button
             :form="formId"
             type="submit"
-            class="px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
+            class="px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
           >
             {{ confirmText }}
           </button>
@@ -46,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 
 const props = defineProps<{
   isOpen: boolean;
@@ -91,7 +92,6 @@ watch(
 
 .modal-body input,
 .modal-body textarea {
-  @apply w-full px-3 py-2 rounded bg-gray-100 dark:bg-gray-700
-         text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500;
+  @apply w-full px-3 py-2 rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white;
 }
 </style>
