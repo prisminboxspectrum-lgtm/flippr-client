@@ -1,0 +1,70 @@
+<template>
+  <div class="space-y-4" role="group" aria-label="Card form">
+    <!-- Question -->
+    <div>
+      <label for="question" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        Question <span class="text-red-600">*</span>
+      </label>
+      <input
+        id="question"
+        v-model="card.question"
+        type="text"
+        maxlength="250"
+        required
+        aria-required="true"
+        aria-label="Card question"
+        class="mt-1 w-full px-3 py-2 rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="e.g. What is a cell?"
+      />
+      <!-- Character counter -->
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        {{ card.question.length }}/250 characters
+      </p>
+    </div>
+
+    <!-- Answer -->
+    <div>
+      <label for="answer" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        Answer <span class="text-red-600">*</span>
+      </label>
+      <textarea
+        id="answer"
+        v-model="card.answer"
+        rows="3"
+        maxlength="500"
+        required
+        aria-required="true"
+        aria-label="Card answer"
+        class="mt-1 w-full px-3 py-2 rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="e.g. The basic unit of life."
+      ></textarea>
+      <!-- Character counter -->
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        {{ card.answer.length }}/500 characters
+      </p>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+
+interface Card {
+  question: string;
+  answer: string;
+}
+
+const props = defineProps<{
+  modelValue: Card;
+}>();
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: Card): void;
+}>();
+
+// Computed getter/setter keeps parent in sync
+const card = computed({
+  get: () => props.modelValue,
+  set: (value: Card) => emit('update:modelValue', value),
+});
+</script>

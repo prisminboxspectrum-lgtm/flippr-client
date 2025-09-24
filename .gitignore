@@ -1,0 +1,35 @@
+# Node logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Node dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+.cache/
+.vite/
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.*.local
+*.env.local
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Deployment-specific files
+.vercel/
+.render/
+
+# Optional frontend extras
+public/locales/   # if you store translations locally and don't want them in git
