@@ -1,5 +1,5 @@
-import api from '../utils/http';
 import type { DeckDetail } from '@/types/types';
+import api from '@/utils/http';
 
 export const getCards = () => api.get('/cards');
 

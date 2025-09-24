@@ -3,13 +3,16 @@
     class="p-4 rounded-lg shadow bg-white dark:bg-gray-800 flex flex-col justify-between"
     role="group"
     :aria-label="`Deck: ${deck.title}`"
+    :aria-describedby="`deck-count-${deck.id}`"
   >
     <!-- Deck title and count -->
     <div>
       <h2 class="text-lg font-semibold text-gray-700 dark:text-white">
         {{ deck.title }}
       </h2>
-      <p class="text-sm text-gray-600 dark:text-gray-400">{{ deck.cardCount }} cards</p>
+      <p :id="`deck-count-${deck.id}`" class="text-sm text-gray-600 dark:text-gray-400">
+        {{ deck.cardCount }} cards
+      </p>
     </div>
 
     <!-- Actions -->
@@ -23,8 +26,8 @@
         :aria-disabled="deck.cardCount === 0"
         :title="deck.cardCount === 0 ? 'Add cards to enable studying' : 'Start study session'"
         aria-label="Start studying this deck"
-        @click="goToStudyDeck"
         class="justify-center"
+        @click="goToStudyDeck"
       />
 
       <!-- Manage button -->
@@ -33,18 +36,20 @@
         :icon="PencilSquareIcon"
         variant="secondary"
         aria-label="Manage this deck"
-        @click="goToManageDeck"
         class="justify-center"
+        @click="goToManageDeck"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
 import { PencilSquareIcon, PlayIcon } from '@heroicons/vue/24/solid';
+import { useRouter } from 'vue-router';
+
 import BaseButton from '@/components/BaseButton.vue';
 import type { DeckSummary } from '@/types/types';
+
 const props = defineProps<{
   deck: DeckSummary;
 }>();

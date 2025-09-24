@@ -15,7 +15,7 @@
       </p>
 
       <!-- Form -->
-      <form @submit.prevent="handleRegister" class="space-y-4">
+      <form class="space-y-4" @submit.prevent="handleRegister">
         <!-- Username -->
         <div>
           <label for="username" class="block text-sm font-medium mb-1"> Username </label>
@@ -25,7 +25,7 @@
             type="text"
             required
             autocomplete="username"
-            class="w-full px-3 py-2 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="form-control border border-gray-300 dark:border-gray-600"
           />
         </div>
 
@@ -38,7 +38,7 @@
             type="password"
             required
             autocomplete="new-password"
-            class="w-full px-3 py-2 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="form-control border border-gray-300 dark:border-gray-600"
           />
         </div>
 
@@ -53,7 +53,8 @@
             type="password"
             required
             autocomplete="new-password"
-            class="w-full px-3 py-2 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="form-control border border-gray-300 dark:border-gray-600"
+          />
           />
         </div>
 
@@ -88,9 +89,10 @@
   </main>
 </template>
 <script setup lang="ts">
+import { ref } from 'vue';
+
 import BaseButton from '@/components/BaseButton.vue';
 import { useAuth } from '@/composables/useAuth';
-import { ref } from 'vue';
 
 const confirmPassword = ref('');
 const { username, password, error, loading, register } = useAuth();

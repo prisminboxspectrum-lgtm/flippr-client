@@ -13,10 +13,9 @@
         required
         aria-required="true"
         aria-label="Card question"
-        class="mt-1 w-full px-3 py-2 rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+        class="form-control mt-1"
         placeholder="e.g. What is a cell?"
       />
-      <!-- Character counter -->
       <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
         {{ card.question.length }}/250 characters
       </p>
@@ -35,10 +34,9 @@
         required
         aria-required="true"
         aria-label="Card answer"
-        class="mt-1 w-full px-3 py-2 rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+        class="form-control mt-1"
         placeholder="e.g. The basic unit of life."
       ></textarea>
-      <!-- Character counter -->
       <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
         {{ card.answer.length }}/500 characters
       </p>
@@ -58,11 +56,8 @@ const props = defineProps<{
   modelValue: Card;
 }>();
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: Card): void;
-}>();
+const emit = defineEmits(['update:modelValue']);
 
-// Computed getter/setter keeps parent in sync
 const card = computed({
   get: () => props.modelValue,
   set: (value: Card) => emit('update:modelValue', value),

@@ -11,7 +11,7 @@
     </section>
 
     <!-- Study UI -->
-    <section v-else-if="deck" aria-labelledby="study-heading">
+    <section v-else-if="deck" aria-labelledby="study-heading" role="region">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6 gap-2 flex-wrap">
         <h1 id="study-heading" class="text-xl font-semibold text-gray-800 dark:text-white">
@@ -48,26 +48,33 @@
       <section class="flex flex-col items-center justify-center flex-1 text-center">
         <!-- Instructions -->
         <!-- Mobile Instructions -->
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 sm:hidden">
+        <p
+          id="flip-instructions-mobile"
+          class="text-sm text-gray-500 dark:text-gray-400 mb-4 sm:hidden"
+        >
           Tap to reveal the answer. Swipe to switch cards.
         </p>
 
         <!-- Desktop Instructions -->
-        <p class="hidden sm:block text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <p
+          id="flip-instructions-desktop"
+          class="hidden sm:block text-sm text-gray-500 dark:text-gray-400 mb-4"
+        >
           Click the card or press Enter/Space to see the answer.
         </p>
 
         <!-- Flip Card -->
         <div
           class="flip-card w-full max-w-md h-64 sm:h-72 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
-          @click="toggleAnswer"
-          @touchstart="handleTouchStart"
-          @touchend="handleTouchEnd"
           role="button"
           tabindex="0"
           :aria-pressed="showAnswer"
           aria-label="Flashcard. Press to reveal or hide the answer."
+          aria-describedby="flip-instructions-mobile flip-instructions-desktop"
           aria-keyshortcuts="Space Enter"
+          @click="toggleAnswer"
+          @touchstart="handleTouchStart"
+          @touchend="handleTouchEnd"
         >
           <div
             class="flip-card-inner w-full h-full transition-transform duration-500 [transform-style:preserve-3d]"
@@ -160,11 +167,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { useRoute } from 'vue-router';
-import Layout from '@/components/Layout.vue';
-import BaseButton from '@/components/BaseButton.vue';
 import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/vue/24/solid';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
+
+import BaseButton from '@/components/BaseButton.vue';
+import Layout from '@/components/Layout.vue';
 import { fetchDeckWithCards } from '@/composables/useDecks';
 import type { DeckDetail } from '@/types/types';
 

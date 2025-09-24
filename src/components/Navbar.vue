@@ -1,11 +1,15 @@
 <template>
-  <nav class="sticky top-0 z-40 w-full bg-gray-100 dark:bg-gray-800 py-2 shadow-sm">
+  <nav
+    class="sticky top-0 z-40 w-full bg-gray-100 dark:bg-gray-800 py-2 shadow-sm"
+    role="navigation"
+    aria-label="Main navigation"
+  >
     <div class="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between">
         <!-- Logo -->
         <RouterLink
           to="/"
-          class="text-xl font-bold text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-sm transition-colors duration-200"
+          class="text-xl font-bold text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-100 rounded-sm transition-colors duration-200"
         >
           Flippr
         </RouterLink>
@@ -14,9 +18,9 @@
         <div class="flex items-center sm:space-x-4">
           <!-- Mobile menu toggle -->
           <button
-            @click="isOpen = !isOpen"
-            class="sm:hidden p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="sm:hidden p-2 rounded"
             aria-label="Toggle navigation menu"
+            @click="isOpen = !isOpen"
           >
             <Bars3Icon v-if="!isOpen" class="h-6 w-6 text-gray-700 dark:text-gray-200" />
             <XMarkIcon v-else class="h-6 w-6 text-gray-700 dark:text-gray-200" />
@@ -28,14 +32,14 @@
           >
             <RouterLink
               to="/dashboard"
-              class="text-base text-gray-700 dark:text-gray-300 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="text-base text-gray-700 dark:text-gray-300 hover:underline"
             >
               Dashboard
             </RouterLink>
 
             <button
+              class="text-base text-gray-700 dark:text-gray-300 hover:underline cursor-pointer"
               @click="logout"
-              class="text-base text-gray-700 dark:text-gray-300 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
             >
               Logout
             </button>
@@ -45,14 +49,14 @@
               class="flex items-center gap-3 ml-2 pl-4 border-l border-gray-300 dark:border-gray-600"
             >
               <button
-                @click="toggle"
                 :class="[
-                  'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+                  'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out',
                   isDark ? 'bg-blue-600' : 'bg-gray-300',
                 ]"
                 role="switch"
                 :aria-checked="isDark"
                 :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+                @click="toggle"
               >
                 <span class="sr-only">Toggle dark mode</span>
                 <span
@@ -70,15 +74,10 @@
 
       <!-- Mobile nav links + dark mode -->
       <div v-if="isOpen" class="sm:hidden mt-3 space-y-3 text-sm text-gray-700 dark:text-gray-300">
-        <RouterLink
-          to="/dashboard"
-          class="block hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          Dashboard
-        </RouterLink>
+        <RouterLink to="/dashboard" class="block hover:underline"> Dashboard </RouterLink>
         <button
+          class="block text-left w-full hover:underline text-gray-700 dark:text-gray-300 cursor-pointer"
           @click="logout"
-          class="block text-left w-full hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 dark:text-gray-300 cursor-pointer"
         >
           Logout
         </button>
@@ -89,14 +88,14 @@
         >
           <span class="font-medium text-gray-700 dark:text-gray-200">Dark Mode</span>
           <button
-            @click="toggle"
             :class="[
-              'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500',
+              'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out',
               isDark ? 'bg-blue-600' : 'bg-gray-300',
             ]"
             role="switch"
             :aria-checked="isDark"
             :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+            @click="toggle"
           >
             <span class="sr-only">Toggle dark mode</span>
             <span
@@ -113,10 +112,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useTheme } from '@/composables/useTheme';
-import { useAuth } from '@/composables/useAuth';
 import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { ref } from 'vue';
+
+import { useAuth } from '@/composables/useAuth';
+import { useTheme } from '@/composables/useTheme';
 
 const isOpen = ref(false);
 const { isDark, toggle } = useTheme();

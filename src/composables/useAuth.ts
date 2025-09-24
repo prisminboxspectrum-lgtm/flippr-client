@@ -1,4 +1,6 @@
+import { AxiosError } from 'axios';
 import { ref } from 'vue';
+
 import { loginUser, registerUser } from '@/services/authService';
 
 export function useAuth() {
@@ -19,8 +21,9 @@ export function useAuth() {
       localStorage.setItem('token', token);
       isLoggedIn.value = true;
       window.location.href = '/dashboard';
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Login failed.';
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError<{ message?: string }>;
+      error.value = axiosError.response?.data?.message || 'Login failed.';
     } finally {
       loading.value = false;
     }
@@ -39,8 +42,9 @@ export function useAuth() {
     try {
       await registerUser(username.value, password.value);
       await login(); // auto-login after registration
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Registration failed.';
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError<{ message?: string }>;
+      error.value = axiosError.response?.data?.message || 'Registration failed.';
       loading.value = false;
     }
   }

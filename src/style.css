@@ -1,22 +1,35 @@
 @import 'tailwindcss';
 
+@layer base {
+  body {
+    @apply font-sans text-base leading-relaxed;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    @apply bg-slate-50 text-gray-900;
+  }
+
+  html.dark {
+    @apply bg-gray-900 text-gray-100;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-offset-2 ring-indigo-500;
+  }
+
+  :root {
+    color-scheme: light;
+  }
+
+  .dark {
+    color-scheme: dark;
+  }
+
+  .form-control {
+    @apply w-full px-3 py-2 rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white text-base;
+  }
+}
+
 /* Define the dark mode variant */
 @custom-variant dark (&:where(.dark, .dark *));
-
-/* Base styles for light mode */
-:root {
-  color-scheme: light;
-}
-
-/* Base styles for dark mode */
-.dark {
-  color-scheme: dark;
-}
-
-/* Ensure html and body have proper backgrounds */
-html {
-  @apply bg-slate-50 text-gray-900;
-}
-html.dark {
-  @apply bg-gray-900 text-gray-100;
-}

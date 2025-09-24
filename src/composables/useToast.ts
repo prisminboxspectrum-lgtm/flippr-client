@@ -1,5 +1,5 @@
 import { h } from 'vue';
-import { useToast as baseToast, TYPE } from 'vue-toastification';
+import { TYPE, useToast as baseToast } from 'vue-toastification';
 
 type ToastOptions = {
   message: string;
