@@ -27,15 +27,38 @@
       />
 
       <!-- Deck Grid or Empty State -->
-      <div v-if="filteredDecks.length === 0" class="text-gray-500 dark:text-gray-400">
-        No matching decks found.
-      </div>
-      <div
-        v-else
-        class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 text-gray-700 dark:text-gray-300"
-      >
-        <Deck v-for="deck in filteredDecks" :key="deck.id" :deck="deck" />
-      </div>
+      <!-- Skeletons -->
+      <transition name="fade" mode="out-in">
+        <div
+          v-if="loadingDecks"
+          key="skeletons"
+          class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+        >
+          <DeckSkeleton v-for="n in batchSize" :key="n" />
+        </div>
+      </transition>
+
+      <!-- Decks -->
+      <transition name="fade" mode="out-in">
+        <div
+          v-if="!loadingDecks && filteredDecks.length > 0"
+          key="decks"
+          class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 text-gray-700 dark:text-gray-300"
+        >
+          <Deck v-for="deck in filteredDecks" :key="deck.id" :deck="deck" />
+        </div>
+      </transition>
+
+      <!-- Empty state -->
+      <transition name="fade" mode="out-in">
+        <div
+          v-if="!loadingDecks && filteredDecks.length === 0"
+          key="empty"
+          class="text-gray-500 dark:text-gray-400"
+        >
+          No matching decks found.
+        </div>
+      </transition>
       <div v-if="hasMore" class="mt-4 text-center">
         <BaseButton label="Load More" variant="secondary" @click="loadMoreDecks" />
       </div>
@@ -78,6 +101,7 @@ import { onMounted, ref } from 'vue';
 import BaseButton from '@/components/BaseButton.vue';
 import BaseModal from '@/components/BaseModal.vue';
 import Deck from '@/components/Deck.vue';
+import DeckSkeleton from '@/components/DeckSkeleton.vue';
 import Layout from '@/components/Layout.vue';
 import SearchInput from '@/components/SearchInput.vue';
 import { addDeck, decks, hasMore, loadDecksBatch } from '@/composables/useDecks';
@@ -93,12 +117,16 @@ const { query: deckSearch, filtered: filteredDecks } = useSearchFilter(decks, ['
 const batchSize = 12;
 let offset = 0;
 
+const loadingDecks = ref(true);
+
 onMounted(async () => {
   offset = 0;
   decks.value = [];
   hasMore.value = true;
+  loadingDecks.value = true;
   await loadDecksBatch(offset, batchSize);
   offset += batchSize;
+  loadingDecks.value = false;
 });
 
 async function loadMoreDecks() {

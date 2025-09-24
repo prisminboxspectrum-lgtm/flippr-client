@@ -1,14 +1,26 @@
 import { AxiosError } from 'axios';
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
+import { loadDecksBatch } from '@/composables/useDecks';
 import { loginUser, registerUser } from '@/services/authService';
 
 export function useAuth() {
+  const router = useRouter();
+
   const username = ref('');
   const password = ref('');
   const error = ref('');
   const loading = ref(false);
   const isLoggedIn = ref(!!localStorage.getItem('token'));
+
+  async function preloadDashboardData() {
+    try {
+      await loadDecksBatch(0, 12);
+    } catch (err) {
+      console.warn('Deck preload failed:', err);
+    }
+  }
 
   async function login() {
     error.value = '';
@@ -20,7 +32,9 @@ export function useAuth() {
 
       localStorage.setItem('token', token);
       isLoggedIn.value = true;
-      window.location.href = '/dashboard';
+
+      await preloadDashboardData();
+      router.push('/dashboard');
     } catch (err: unknown) {
       const axiosError = err as AxiosError<{ message?: string }>;
       error.value = axiosError.response?.data?.message || 'Login failed.';
@@ -41,10 +55,11 @@ export function useAuth() {
 
     try {
       await registerUser(username.value, password.value);
-      await login(); // auto-login after registration
+      await login();
     } catch (err: unknown) {
       const axiosError = err as AxiosError<{ message?: string }>;
       error.value = axiosError.response?.data?.message || 'Registration failed.';
+    } finally {
       loading.value = false;
     }
   }
@@ -52,14 +67,12 @@ export function useAuth() {
   function logout() {
     localStorage.removeItem('token');
     isLoggedIn.value = false;
-    setTimeout(() => {
-      window.location.href = '/login';
-    }, 100);
+    router.push('/login');
   }
 
   function checkSession() {
     if (isLoggedIn.value) {
-      window.location.href = '/dashboard';
+      router.push('/dashboard');
     }
   }
 
