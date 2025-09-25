@@ -4,7 +4,7 @@
     role="navigation"
     aria-label="Main navigation"
   >
-    <div class="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 relative">
       <div class="flex items-center justify-between">
         <!-- Logo -->
         <RouterLink
@@ -72,11 +72,14 @@
         </div>
       </div>
 
-      <!-- Mobile nav links + dark mode -->
-      <div v-if="isOpen" class="sm:hidden mt-3 space-y-3 text-sm text-gray-700 dark:text-gray-300">
-        <RouterLink to="/dashboard" class="block hover:underline"> Dashboard </RouterLink>
+      <!-- Mobile nav links overlay -->
+      <div
+        v-if="isOpen"
+        class="sm:hidden absolute top-full left-0 w-full bg-gray-100 dark:bg-gray-800 shadow-md z-50 py-4 px-4"
+      >
+        <RouterLink to="/dashboard" class="block hover:underline mb-2">Dashboard</RouterLink>
         <button
-          class="block text-left w-full hover:underline text-gray-700 dark:text-gray-300 cursor-pointer"
+          class="block text-left w-full hover:underline text-gray-700 dark:text-gray-300 cursor-pointer mb-2"
           @click="logout"
         >
           Logout
