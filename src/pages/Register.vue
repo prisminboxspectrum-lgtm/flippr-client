@@ -55,7 +55,6 @@
             autocomplete="new-password"
             class="form-control border border-gray-300 dark:border-gray-600"
           />
-          />
         </div>
 
         <!-- Error Message -->
