@@ -68,7 +68,7 @@
           to="/register"
           class="text-blue-600 dark:text-blue-400 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          Create an account.
+          Create an account
         </RouterLink>
       </p>
     </div>

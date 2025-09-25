@@ -83,7 +83,7 @@
 
       <!-- Search Cards -->
       <SearchInput
-        id="search-cards"
+        ref="searchInputRef"
         v-model="cardSearch"
         placeholder="Search cards…"
         class="mb-4"
@@ -91,19 +91,28 @@
 
       <!-- Cards List -->
       <div
-        class="overflow-x-auto sm:overflow-visible rounded-lg border border-gray-200 dark:border-gray-700"
+        class="overflow-x-auto sm:overflow-visible border border-gray-200 dark:border-gray-700 rounded-lg"
       >
-        <table class="w-full text-sm text-left text-gray-700 dark:text-gray-200">
+        <table
+          class="w-full text-sm text-left text-gray-700 dark:text-gray-200 rounded-lg overflow-hidden"
+        >
           <caption class="sr-only">
             List of flashcards in this deck
           </caption>
+
           <thead class="bg-gray-100 dark:bg-gray-700">
-            <tr>
-              <th scope="col" class="px-4 py-3 font-semibold">Question</th>
+            <tr class="rounded-t-lg">
+              <th
+                scope="col"
+                class="px-4 py-3 font-semibold first:rounded-tl-lg last:rounded-tr-lg"
+              >
+                Question
+              </th>
               <th scope="col" class="px-4 py-3 font-semibold">Answer</th>
               <th scope="col" class="px-4 py-3 text-right font-semibold">Actions</th>
             </tr>
           </thead>
+
           <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
             <!-- Skeleton rows -->
             <template v-if="isLoading">
@@ -166,7 +175,7 @@
     <!-- Modals (unchanged) -->
     <BaseModal
       :is-open="isAddCardOpen"
-      title="Add a New Card"
+      title="Add New Card"
       :show-actions="true"
       confirm-label="Add"
       cancel-label="Cancel"
@@ -214,7 +223,7 @@
 
 <script setup lang="ts">
 import { PencilIcon, PlusIcon, TrashIcon } from '@heroicons/vue/24/solid';
-import { nextTick, onMounted, ref } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import BaseButton from '@/components/BaseButton.vue';
@@ -263,6 +272,42 @@ const isEditingTitle = ref(false);
 const editedTitle = ref('');
 const titleInput = ref<HTMLInputElement | null>(null);
 
+// Search input ref for shortcut (component instance, same as Dashboard)
+const searchInputRef = ref<InstanceType<typeof SearchInput> | null>(null);
+
+// Handle '/' shortcut to focus search input
+function handleShortcut(e: KeyboardEvent) {
+  const target = e.target as HTMLElement | null;
+  const tag = (target?.tagName || '').toLowerCase();
+  const isEditable = tag === 'input' || tag === 'textarea' || target?.isContentEditable;
+  if (isEditable || e.altKey || e.ctrlKey || e.metaKey) return;
+
+  if (e.key === '/') {
+    e.preventDefault();
+    searchInputRef.value?.focus();
+  }
+}
+
+onMounted(async () => {
+  window.addEventListener('keydown', handleShortcut, { passive: false });
+
+  try {
+    const d = await fetchDeckWithCards(deckId);
+    deck.value = d;
+    editedTitle.value = d.title;
+    await fetchCards();
+  } catch {
+    showError('Failed to load deck.');
+  } finally {
+    isLoading.value = false;
+  }
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleShortcut);
+});
+
+// Deck title editing
 function startEditingTitle() {
   if (!deck.value) return;
   editedTitle.value = deck.value.title;
@@ -294,6 +339,7 @@ async function saveTitle() {
   isEditingTitle.value = false;
 }
 
+// Add / Edit card modals
 function closeAddCardModal() {
   isAddCardOpen.value = false;
   newCard.value = { question: '', answer: '' };
@@ -342,6 +388,7 @@ async function saveEditedCard(e: Event) {
   }
 }
 
+// Delete deck / card
 async function deleteDeck(e: Event) {
   e.preventDefault();
   if (!deck.value) return;
@@ -364,25 +411,6 @@ async function deleteCard(card: Card) {
   } catch {
     showError('Failed to delete card.');
   }
-}
-
-// Load deck + cards
-onMounted(async () => {
-  try {
-    const d = await fetchDeckWithCards(deckId);
-    deck.value = d;
-    editedTitle.value = d.title;
-    await fetchCards();
-  } catch {
-    showError('Failed to load deck.');
-  } finally {
-    isLoading.value = false;
-  }
-});
-
-// Expose isLoading for testing
-if (import.meta.env.DEV) {
-  (window as any).isLoading = isLoading;
 }
 </script>
 

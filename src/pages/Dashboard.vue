@@ -13,21 +13,21 @@
           label="Add Deck"
           :icon="PlusIcon"
           variant="primary"
-          aria-label="Add a new flashcard deck"
+          aria-label="Add a new deck"
           @click="openAddDeck"
         />
       </div>
 
       <!-- Search Decks -->
       <SearchInput
+        ref="searchInputRef"
         id="search-decks"
         v-model="deckSearch"
         placeholder="Search decks…"
         class="mb-4"
       />
 
-      <!-- Deck Grid or Empty State -->
-      <!-- Skeletons -->
+      <!-- Rest of your template stays the same -->
       <transition name="fade" mode="out-in">
         <div
           v-if="loadingDecks"
@@ -38,7 +38,6 @@
         </div>
       </transition>
 
-      <!-- Decks -->
       <transition name="fade" mode="out-in">
         <div
           v-if="!loadingDecks && filteredDecks.length > 0"
@@ -49,7 +48,6 @@
         </div>
       </transition>
 
-      <!-- Empty state -->
       <transition name="fade" mode="out-in">
         <div
           v-if="!loadingDecks && filteredDecks.length === 0"
@@ -59,6 +57,7 @@
           No matching decks found.
         </div>
       </transition>
+
       <div v-if="hasMore" class="mt-4 text-center">
         <BaseButton label="Load More" variant="secondary" @click="loadMoreDecks" />
       </div>
@@ -96,7 +95,7 @@
 
 <script setup lang="ts">
 import { PlusIcon } from '@heroicons/vue/20/solid';
-import { onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 import BaseButton from '@/components/BaseButton.vue';
 import BaseModal from '@/components/BaseModal.vue';
@@ -110,13 +109,16 @@ import { useToast } from '@/composables/useToast';
 
 const { success, error: showError } = useToast();
 
+// Modal + deck state
 const showAddDeck = ref(false);
 const newDeckTitle = ref('');
+// Reference to the SearchInput component (not the input element)
+const searchInputRef = ref<InstanceType<typeof SearchInput> | null>(null);
 
+// Deck search
 const { query: deckSearch, filtered: filteredDecks } = useSearchFilter(decks, ['title']);
 const batchSize = 12;
 let offset = 0;
-
 const loadingDecks = ref(true);
 
 onMounted(async () => {
@@ -127,7 +129,25 @@ onMounted(async () => {
   await loadDecksBatch(offset, batchSize);
   offset += batchSize;
   loadingDecks.value = false;
+
+  window.addEventListener('keydown', handleShortcut, { passive: false });
 });
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleShortcut);
+});
+
+function handleShortcut(e: KeyboardEvent) {
+  const target = e.target as HTMLElement | null;
+  const tag = (target?.tagName || '').toLowerCase();
+  const isEditable = tag === 'input' || tag === 'textarea' || target?.isContentEditable;
+  if (isEditable || e.altKey || e.ctrlKey || e.metaKey) return;
+
+  if (e.key === '/') {
+    e.preventDefault();
+    searchInputRef.value?.focus();
+  }
+}
 
 async function loadMoreDecks() {
   await loadDecksBatch(offset, batchSize);
