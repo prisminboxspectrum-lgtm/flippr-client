@@ -22,7 +22,14 @@
           class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2"
           aria-live="polite"
         >
-          <div>
+          <div v-if="isLoading">
+            <!-- Skeleton: title -->
+            <div class="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-2 animate-pulse"></div>
+            <!-- Skeleton: card count -->
+            <div class="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+          </div>
+
+          <div v-else>
             <div class="flex items-center gap-2">
               <template v-if="!isEditingTitle">
                 <h2 class="text-lg font-semibold text-gray-700 dark:text-white">
@@ -51,7 +58,6 @@
               </template>
             </div>
 
-            <!-- Use cards.length from composable -->
             <p class="text-sm text-gray-600 dark:text-gray-400">{{ cards.length }} cards</p>
           </div>
         </div>
@@ -85,15 +91,6 @@
 
       <!-- Cards List -->
       <div
-        v-if="filteredCards.length === 0"
-        class="text-gray-500 dark:text-gray-400"
-        role="status"
-        aria-live="polite"
-      >
-        No matching cards found.
-      </div>
-      <div
-        v-else
         class="overflow-x-auto sm:overflow-visible rounded-lg border border-gray-200 dark:border-gray-700"
       >
         <table class="w-full text-sm text-left text-gray-700 dark:text-gray-200">
@@ -108,34 +105,59 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
-            <!-- Iterate over filteredCards (from useSearchFilter(cards)) -->
-            <tr v-for="card in filteredCards" :key="card.id">
-              <td class="px-4 py-3 max-w-xs truncate" :title="card.question">
-                {{ card.question }}
-              </td>
-              <td
-                class="px-4 py-3 max-w-sm truncate text-gray-600 dark:text-gray-300"
-                :title="card.answer"
-              >
-                {{ card.answer }}
-              </td>
-              <td class="px-4 py-3 text-right whitespace-nowrap">
-                <button
-                  aria-label="Edit card"
-                  class="p-1 text-blue-600 hover:text-blue-800 cursor-pointer"
-                  @click="openEditCard(card)"
+            <!-- Skeleton rows -->
+            <template v-if="isLoading">
+              <tr v-for="n in 4" :key="n">
+                <td class="px-4 py-3">
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse"></div>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6 animate-pulse"></div>
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <div
+                    class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-8 inline-block animate-pulse"
+                  ></div>
+                </td>
+              </tr>
+            </template>
+
+            <!-- Real cards -->
+            <template v-else>
+              <tr v-if="filteredCards.length === 0">
+                <td colspan="3" class="px-4 py-3 text-gray-500 dark:text-gray-400">
+                  No matching cards found.
+                </td>
+              </tr>
+
+              <tr v-for="card in filteredCards" :key="card.id">
+                <td class="px-4 py-3 max-w-xs truncate" :title="card.question">
+                  {{ card.question }}
+                </td>
+                <td
+                  class="px-4 py-3 max-w-sm truncate text-gray-600 dark:text-gray-300"
+                  :title="card.answer"
                 >
-                  <PencilIcon class="h-4 w-4" />
-                </button>
-                <button
-                  aria-label="Delete card"
-                  class="p-1 text-red-600 hover:text-red-800 ml-2 cursor-pointer"
-                  @click="deleteCard(card)"
-                >
-                  <TrashIcon class="h-4 w-4" />
-                </button>
-              </td>
-            </tr>
+                  {{ card.answer }}
+                </td>
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <button
+                    aria-label="Edit card"
+                    class="p-1 text-blue-600 hover:text-blue-800 cursor-pointer"
+                    @click="openEditCard(card)"
+                  >
+                    <PencilIcon class="h-4 w-4" />
+                  </button>
+                  <button
+                    aria-label="Delete card"
+                    class="p-1 text-red-600 hover:text-red-800 ml-2 cursor-pointer"
+                    @click="deleteCard(card)"
+                  >
+                    <TrashIcon class="h-4 w-4" />
+                  </button>
+                </td>
+              </tr>
+            </template>
           </tbody>
         </table>
       </div>
@@ -215,32 +237,25 @@ const route = useRoute();
 const router = useRouter();
 const deckId = route.params.id as string;
 
-// Reactive state for deck
+// Reactive state
 const deck = ref<DeckDetail | null>(null);
+const isLoading = ref(true);
 
-// Cards composable
+// Cards
 const { cards, fetchCards, addCard, editCard, removeCard } = useCards(deckId);
-
-// Search filter (filter over cards)
 const { query: cardSearch, filtered: filteredCards } = useSearchFilter(cards, ['question']);
 
 // Toast
 const { success, error: showError } = useToast();
 
-// Modal state
+// Modals
 const isAddCardOpen = ref(false);
 const isDeleteOpen = ref(false);
 const isEditCardOpen = ref(false);
 
 // Card state
 const newCard = ref({ question: '', answer: '' });
-const blankCard: Card = {
-  id: '',
-  question: '',
-  answer: '',
-  dateCreated: '',
-  dateUpdated: '',
-};
+const blankCard: Card = { id: '', question: '', answer: '', dateCreated: '', dateUpdated: '' };
 const editedCard = ref<Card>({ ...blankCard });
 
 // Title editing
@@ -258,36 +273,27 @@ function startEditingTitle() {
 async function saveTitle() {
   if (!deck.value) return;
   let newTitle = editedTitle.value.trim();
+  if (!newTitle) newTitle = 'Untitled Deck';
 
-  // If empty, enforce default
-  if (!newTitle) {
-    newTitle = 'Untitled Deck';
-  }
-
-  // Only update if something actually changed
   if (newTitle !== deck.value.title) {
     try {
       await updateDeckInStore({ ...deck.value, title: newTitle });
       deck.value.title = newTitle;
       deck.value.dateUpdated = new Date().toISOString();
-
-      // Toast logic
-      if (newTitle === 'Untitled Deck' && editedTitle.value.trim() === '') {
-        success('Name cannot be empty, set to "Untitled Deck"');
-      } else {
-        success(`Deck renamed to "${newTitle}"`);
-      }
+      success(
+        newTitle === 'Untitled Deck'
+          ? 'Name cannot be empty, set to "Untitled Deck"'
+          : `Deck renamed to "${newTitle}"`
+      );
     } catch {
       showError('Failed to update deck title.');
     }
   }
 
-  // Reset editing state
   editedTitle.value = newTitle;
   isEditingTitle.value = false;
 }
 
-// Add card
 function closeAddCardModal() {
   isAddCardOpen.value = false;
   newCard.value = { question: '', answer: '' };
@@ -295,9 +301,6 @@ function closeAddCardModal() {
 
 async function handleAddCard(e: Event) {
   e.preventDefault();
-  const form = e.target as HTMLFormElement;
-  if (!form.checkValidity()) return;
-
   const q = newCard.value.question.trim();
   const a = newCard.value.answer.trim();
   if (!q || !a) return;
@@ -312,12 +315,8 @@ async function handleAddCard(e: Event) {
   }
 }
 
-// Edit card
 function openEditCard(card: Card) {
-  if (!card.id) {
-    console.error('Card has no id:', card);
-    return;
-  }
+  if (!card.id) return console.error('Card has no id:', card);
   editedCard.value = { ...card };
   isEditCardOpen.value = true;
 }
@@ -329,13 +328,9 @@ function closeEditCardModal() {
 
 async function saveEditedCard(e: Event) {
   e.preventDefault();
-  if (!editedCard.value.id) {
-    showError('Cannot update card: missing id');
-    return;
-  }
   const q = editedCard.value.question.trim();
   const a = editedCard.value.answer.trim();
-  if (!q || !a) return;
+  if (!editedCard.value.id || !q || !a) return showError('Cannot update card');
 
   try {
     await editCard(editedCard.value.id, { question: q, answer: a });
@@ -347,7 +342,6 @@ async function saveEditedCard(e: Event) {
   }
 }
 
-// Delete deck
 async function deleteDeck(e: Event) {
   e.preventDefault();
   if (!deck.value) return;
@@ -363,7 +357,6 @@ async function deleteDeck(e: Event) {
   }
 }
 
-// Delete card
 async function deleteCard(card: Card) {
   try {
     await removeCard(card.id);
@@ -373,7 +366,7 @@ async function deleteCard(card: Card) {
   }
 }
 
-// Load deck + cards on mount
+// Load deck + cards
 onMounted(async () => {
   try {
     const d = await fetchDeckWithCards(deckId);
@@ -382,12 +375,18 @@ onMounted(async () => {
     await fetchCards();
   } catch {
     showError('Failed to load deck.');
+  } finally {
+    isLoading.value = false;
   }
 });
+
+// Expose isLoading for testing
+if (import.meta.env.DEV) {
+  (window as any).isLoading = isLoading;
+}
 </script>
 
 <style scoped>
-/* Transition for card removal */
 .card-enter-active,
 .card-leave-active {
   transition: all 0.3s ease;
