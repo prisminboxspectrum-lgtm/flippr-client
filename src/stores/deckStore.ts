@@ -135,6 +135,7 @@ export const useDeckStore = defineStore('deckStore', () => {
       delete deckDetails.value[id];
     } catch (err) {
       console.error('Failed to delete deck:', err);
+      throw err; // important
     }
   }
 

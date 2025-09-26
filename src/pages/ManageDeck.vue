@@ -358,12 +358,13 @@ async function deleteDeck(e: Event) {
   e.preventDefault();
   if (!deck.value) return;
 
+  const title = deck.value.title;
   try {
     await deckStore.deleteDeck(deckId);
-    success(`Deck "${deck.value.title}" deleted successfully!`);
+    success(`Deck "${title}" deleted successfully!`);
     router.push('/dashboard');
-  } catch {
-    showError('Failed to delete deck.');
+  } catch (err: any) {
+    showError(err.response?.data?.message || 'Failed to delete deck.');
   } finally {
     isDeleteOpen.value = false;
   }
