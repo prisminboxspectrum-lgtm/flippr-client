@@ -117,11 +117,18 @@
 <script setup lang="ts">
 import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-import { useAuth } from '@/composables/useAuth';
 import { useTheme } from '@/composables/useTheme';
+import { useAuthStore } from '@/stores/authStore';
 
+const router = useRouter();
 const isOpen = ref(false);
 const { isDark, toggle } = useTheme();
-const { logout } = useAuth();
+const authStore = useAuthStore();
+
+function logout() {
+  authStore.logout();
+  router.push('/login');
+}
 </script>

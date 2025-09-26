@@ -13,44 +13,43 @@
           label="Add Deck"
           :icon="PlusIcon"
           variant="primary"
-          aria-label="Add a new deck"
+          aria-label="Add a new flashcard deck"
           @click="openAddDeck"
         />
       </div>
 
       <!-- Search Decks -->
       <SearchInput
-        ref="searchInputRef"
         id="search-decks"
         v-model="deckSearch"
         placeholder="Search decks…"
         class="mb-4"
       />
 
-      <!-- Rest of your template stays the same -->
+      <!-- Deck Grid or Empty State -->
       <transition name="fade" mode="out-in">
         <div
-          v-if="loadingDecks"
+          v-if="loading"
           key="skeletons"
           class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
         >
-          <DeckSkeleton v-for="n in batchSize" :key="n" />
+          <DeckSkeleton v-for="n in [...Array(batchSize).keys()]" :key="n" />
         </div>
       </transition>
 
       <transition name="fade" mode="out-in">
         <div
-          v-if="!loadingDecks && filteredDecks.length > 0"
+          v-if="!loading && filteredDecks.length > 0"
           key="decks"
           class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 text-gray-700 dark:text-gray-300"
         >
-          <Deck v-for="deck in filteredDecks" :key="deck.id" :deck="deck" />
+          <Deck v-for="deck in filteredDecks ?? []" :key="deck.id" :deck="deck" />
         </div>
       </transition>
 
       <transition name="fade" mode="out-in">
         <div
-          v-if="!loadingDecks && filteredDecks.length === 0"
+          v-if="!loading && filteredDecks.length === 0"
           key="empty"
           class="text-gray-500 dark:text-gray-400"
         >
@@ -95,7 +94,8 @@
 
 <script setup lang="ts">
 import { PlusIcon } from '@heroicons/vue/20/solid';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { storeToRefs } from 'pinia';
+import { onMounted, ref, watch } from 'vue';
 
 import BaseButton from '@/components/BaseButton.vue';
 import BaseModal from '@/components/BaseModal.vue';
@@ -103,56 +103,32 @@ import Deck from '@/components/Deck.vue';
 import DeckSkeleton from '@/components/DeckSkeleton.vue';
 import Layout from '@/components/Layout.vue';
 import SearchInput from '@/components/SearchInput.vue';
-import { addDeck, decks, hasMore, loadDecksBatch } from '@/composables/useDecks';
 import { useSearchFilter } from '@/composables/useSearchFilter';
 import { useToast } from '@/composables/useToast';
+import { useAuthStore } from '@/stores/authStore';
+import { useDeckStore } from '@/stores/deckStore';
+
+const deckStore = useDeckStore();
+const authStore = useAuthStore();
+
+const { decks, hasMore, loading } = storeToRefs(deckStore);
+const batchSize = deckStore.batchSize;
 
 const { success, error: showError } = useToast();
 
-// Modal + deck state
+const { loadInitialDecks, loadMoreDecks, createNewDeck } = deckStore;
+
 const showAddDeck = ref(false);
 const newDeckTitle = ref('');
-// Reference to the SearchInput component (not the input element)
-const searchInputRef = ref<InstanceType<typeof SearchInput> | null>(null);
 
-// Deck search
 const { query: deckSearch, filtered: filteredDecks } = useSearchFilter(decks, ['title']);
-const batchSize = 12;
-let offset = 0;
-const loadingDecks = ref(true);
 
 onMounted(async () => {
-  offset = 0;
-  decks.value = [];
-  hasMore.value = true;
-  loadingDecks.value = true;
-  await loadDecksBatch(offset, batchSize);
-  offset += batchSize;
-  loadingDecks.value = false;
-
-  window.addEventListener('keydown', handleShortcut, { passive: false });
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener('keydown', handleShortcut);
-});
-
-function handleShortcut(e: KeyboardEvent) {
-  const target = e.target as HTMLElement | null;
-  const tag = (target?.tagName || '').toLowerCase();
-  const isEditable = tag === 'input' || tag === 'textarea' || target?.isContentEditable;
-  if (isEditable || e.altKey || e.ctrlKey || e.metaKey) return;
-
-  if (e.key === '/') {
-    e.preventDefault();
-    searchInputRef.value?.focus();
+  // Only load decks if user is authenticated
+  if (authStore.isLoggedIn) {
+    await loadInitialDecks();
   }
-}
-
-async function loadMoreDecks() {
-  await loadDecksBatch(offset, batchSize);
-  offset += batchSize;
-}
+});
 
 function openAddDeck() {
   showAddDeck.value = true;
@@ -167,7 +143,7 @@ async function submitDeck(e: Event) {
   if (!title) return;
 
   try {
-    const newDeck = await addDeck({ title });
+    const newDeck = await createNewDeck(title);
     success(`Deck "${newDeck.title}" created successfully!`);
     newDeckTitle.value = '';
     showAddDeck.value = false;

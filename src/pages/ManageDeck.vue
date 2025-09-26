@@ -22,13 +22,13 @@
           class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2"
           aria-live="polite"
         >
-          <div v-if="isLoading">
-            <!-- Skeleton: title -->
+          <!-- Skeletons for deck info -->
+          <div v-if="isDeckLoading">
             <div class="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-2 animate-pulse"></div>
-            <!-- Skeleton: card count -->
             <div class="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
           </div>
 
+          <!-- Real deck info -->
           <div v-else>
             <div class="flex items-center gap-2">
               <template v-if="!isEditingTitle">
@@ -83,7 +83,7 @@
 
       <!-- Search Cards -->
       <SearchInput
-        ref="searchInputRef"
+        id="search-cards"
         v-model="cardSearch"
         placeholder="Search cards…"
         class="mb-4"
@@ -91,31 +91,22 @@
 
       <!-- Cards List -->
       <div
-        class="overflow-x-auto sm:overflow-visible border border-gray-200 dark:border-gray-700 rounded-lg"
+        class="overflow-x-auto sm:overflow-visible rounded-lg border border-gray-200 dark:border-gray-700"
       >
-        <table
-          class="w-full text-sm text-left text-gray-700 dark:text-gray-200 rounded-lg overflow-hidden"
-        >
+        <table class="w-full text-sm text-left text-gray-700 dark:text-gray-200">
           <caption class="sr-only">
             List of flashcards in this deck
           </caption>
-
           <thead class="bg-gray-100 dark:bg-gray-700">
-            <tr class="rounded-t-lg">
-              <th
-                scope="col"
-                class="px-4 py-3 font-semibold first:rounded-tl-lg last:rounded-tr-lg"
-              >
-                Question
-              </th>
+            <tr>
+              <th scope="col" class="px-4 py-3 font-semibold">Question</th>
               <th scope="col" class="px-4 py-3 font-semibold">Answer</th>
               <th scope="col" class="px-4 py-3 text-right font-semibold">Actions</th>
             </tr>
           </thead>
-
           <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
-            <!-- Skeleton rows -->
-            <template v-if="isLoading">
+            <!-- Skeleton rows for cards -->
+            <template v-if="isCardsLoading">
               <tr v-for="n in 4" :key="n">
                 <td class="px-4 py-3">
                   <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse"></div>
@@ -175,7 +166,7 @@
     <!-- Modals (unchanged) -->
     <BaseModal
       :is-open="isAddCardOpen"
-      title="Add New Card"
+      title="Add a New Card"
       :show-actions="true"
       confirm-label="Add"
       cancel-label="Cancel"
@@ -223,7 +214,8 @@
 
 <script setup lang="ts">
 import { PencilIcon, PlusIcon, TrashIcon } from '@heroicons/vue/24/solid';
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { storeToRefs } from 'pinia';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import BaseButton from '@/components/BaseButton.vue';
@@ -231,27 +223,31 @@ import BaseModal from '@/components/BaseModal.vue';
 import CardForm from '@/components/CardForm.vue';
 import Layout from '@/components/Layout.vue';
 import SearchInput from '@/components/SearchInput.vue';
-import { useCards } from '@/composables/useCards';
-import {
-  deleteDeck as deleteDeckFromStore,
-  fetchDeckWithCards,
-  updateDeck as updateDeckInStore,
-} from '@/composables/useDecks';
 import { useSearchFilter } from '@/composables/useSearchFilter';
 import { useToast } from '@/composables/useToast';
-import type { Card, DeckDetail } from '@/types/types';
+import { useCardStore } from '@/stores/cardStore';
+import { useDeckStore } from '@/stores/deckStore';
+import type { Card } from '@/types/types';
 
 // Router + params
 const route = useRoute();
 const router = useRouter();
-const deckId = route.params.id as string;
+const deckId = String(route.params.id);
+
+// Stores
+const deckStore = useDeckStore();
+const cardStore = useCardStore();
+const { deckDetails } = storeToRefs(deckStore);
 
 // Reactive state
-const deck = ref<DeckDetail | null>(null);
-const isLoading = ref(true);
+const isDeckLoading = ref(!deckStore.isDeckLoaded(deckId));
+const isCardsLoading = ref(!cardStore.getCards(deckId).length);
+const isLoading = computed(() => isDeckLoading.value || isCardsLoading.value);
 
-// Cards
-const { cards, fetchCards, addCard, editCard, removeCard } = useCards(deckId);
+const deck = computed(() => deckDetails.value[deckId] ?? null);
+const cards = computed(() => cardStore.getCards(deckId));
+
+// Search
 const { query: cardSearch, filtered: filteredCards } = useSearchFilter(cards, ['question']);
 
 // Toast
@@ -272,42 +268,6 @@ const isEditingTitle = ref(false);
 const editedTitle = ref('');
 const titleInput = ref<HTMLInputElement | null>(null);
 
-// Search input ref for shortcut (component instance, same as Dashboard)
-const searchInputRef = ref<InstanceType<typeof SearchInput> | null>(null);
-
-// Handle '/' shortcut to focus search input
-function handleShortcut(e: KeyboardEvent) {
-  const target = e.target as HTMLElement | null;
-  const tag = (target?.tagName || '').toLowerCase();
-  const isEditable = tag === 'input' || tag === 'textarea' || target?.isContentEditable;
-  if (isEditable || e.altKey || e.ctrlKey || e.metaKey) return;
-
-  if (e.key === '/') {
-    e.preventDefault();
-    searchInputRef.value?.focus();
-  }
-}
-
-onMounted(async () => {
-  window.addEventListener('keydown', handleShortcut, { passive: false });
-
-  try {
-    const d = await fetchDeckWithCards(deckId);
-    deck.value = d;
-    editedTitle.value = d.title;
-    await fetchCards();
-  } catch {
-    showError('Failed to load deck.');
-  } finally {
-    isLoading.value = false;
-  }
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener('keydown', handleShortcut);
-});
-
-// Deck title editing
 function startEditingTitle() {
   if (!deck.value) return;
   editedTitle.value = deck.value.title;
@@ -322,7 +282,7 @@ async function saveTitle() {
 
   if (newTitle !== deck.value.title) {
     try {
-      await updateDeckInStore({ ...deck.value, title: newTitle });
+      await deckStore.updateDeck({ ...deck.value, title: newTitle });
       deck.value.title = newTitle;
       deck.value.dateUpdated = new Date().toISOString();
       success(
@@ -339,7 +299,6 @@ async function saveTitle() {
   isEditingTitle.value = false;
 }
 
-// Add / Edit card modals
 function closeAddCardModal() {
   isAddCardOpen.value = false;
   newCard.value = { question: '', answer: '' };
@@ -352,7 +311,7 @@ async function handleAddCard(e: Event) {
   if (!q || !a) return;
 
   try {
-    await addCard({ question: q, answer: a });
+    await cardStore.addCard(deckId, { question: q, answer: a });
     success(`Card "${q}" added successfully!`);
   } catch {
     showError('Failed to add card.');
@@ -379,7 +338,7 @@ async function saveEditedCard(e: Event) {
   if (!editedCard.value.id || !q || !a) return showError('Cannot update card');
 
   try {
-    await editCard(editedCard.value.id, { question: q, answer: a });
+    await cardStore.editCard(deckId, editedCard.value.id, { question: q, answer: a });
     success(`Card "${q}" updated successfully!`);
   } catch {
     showError('Failed to update card.');
@@ -388,13 +347,12 @@ async function saveEditedCard(e: Event) {
   }
 }
 
-// Delete deck / card
 async function deleteDeck(e: Event) {
   e.preventDefault();
   if (!deck.value) return;
 
   try {
-    await deleteDeckFromStore(deckId);
+    await deckStore.deleteDeck(deckId);
     success(`Deck "${deck.value.title}" deleted successfully!`);
     router.push('/dashboard');
   } catch {
@@ -406,11 +364,39 @@ async function deleteDeck(e: Event) {
 
 async function deleteCard(card: Card) {
   try {
-    await removeCard(card.id);
+    await cardStore.removeCard(deckId, card.id);
     success(`Card "${card.question}" deleted.`);
   } catch {
     showError('Failed to delete card.');
   }
+}
+
+// Load deck + cards
+onMounted(async () => {
+  try {
+    // Only fetch deck if not cached
+    if (!deckStore.isDeckLoaded(deckId)) {
+      isDeckLoading.value = true;
+      await deckStore.fetchDeckWithCards(deckId);
+    }
+    editedTitle.value = deck.value?.title ?? '';
+    isDeckLoading.value = false;
+
+    // Only fetch cards if not already cached
+    if (!cardStore.getCards(deckId).length) {
+      isCardsLoading.value = true;
+      await cardStore.fetchCards(deckId);
+    }
+  } catch {
+    showError('Failed to load deck.');
+  } finally {
+    isCardsLoading.value = false;
+  }
+});
+
+// Expose isLoading for testing
+if (import.meta.env.DEV) {
+  (window as any).isLoading = isLoading;
 }
 </script>
 

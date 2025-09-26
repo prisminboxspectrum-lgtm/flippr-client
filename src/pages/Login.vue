@@ -8,13 +8,11 @@
       <h1 class="text-xl font-semibold text-gray-800 dark:text-white text-center">
         Ready to master what matters?
       </h1>
-
       <!-- Subheading -->
       <p class="text-sm text-gray-600 dark:text-gray-400 text-center">
         Flippr helps you turn knowledge into confidence — one card at a time. Log in and start
         learning smarter.
       </p>
-
       <!-- Form -->
       <form class="space-y-4" @submit.prevent="handleLogin">
         <!-- Username -->
@@ -30,7 +28,6 @@
             aria-label="Username"
           />
         </div>
-
         <!-- Password -->
         <div>
           <label for="password" class="block text-sm font-medium mb-1"> Password </label>
@@ -44,24 +41,20 @@
             aria-label="Password"
           />
         </div>
-
         <!-- Error Message -->
-        <p v-if="error" class="text-sm text-red-600 dark:text-red-400 text-center">
-          {{ error }}
+        <p v-if="authStore.error" class="text-sm text-red-600 dark:text-red-400 text-center">
+          {{ authStore.error }}
         </p>
-
         <!-- Submit -->
         <BaseButton
-          :label="loading ? 'Logging in…' : 'Log In'"
+          :label="authStore.loading ? 'Logging in…' : 'Log In'"
           variant="primary"
-          :disabled="loading"
+          :disabled="authStore.loading"
           type="submit"
           class="w-full"
           aria-label="Log in to Flippr"
-          @click="handleLogin"
         />
       </form>
-
       <p class="text-sm text-center text-gray-600 dark:text-gray-400">
         New to Flippr?
         <RouterLink
@@ -74,18 +67,31 @@
     </div>
   </main>
 </template>
-
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import BaseButton from '@/components/BaseButton.vue';
-import { useAuth } from '@/composables/useAuth';
+import { useAuthStore } from '@/stores/authStore';
 
-const { username, password, error, loading, login: handleLogin } = useAuth();
+const router = useRouter();
+const authStore = useAuthStore();
+
+// Form state
+const username = ref('');
+const password = ref('');
 
 onMounted(() => {
-  if (localStorage.getItem('token')) {
-    window.location.href = '/dashboard';
+  if (authStore.isLoggedIn) {
+    router.push('/dashboard');
   }
 });
+
+async function handleLogin() {
+  const result = await authStore.login(username.value, password.value);
+
+  if (result.success) {
+    router.push('/dashboard');
+  }
+}
 </script>
