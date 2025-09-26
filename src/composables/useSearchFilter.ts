@@ -5,9 +5,11 @@ export function useSearchFilter<T>(items: Ref<T[]>, fields: (keyof T)[]) {
 
   const filtered = computed(() => {
     const q = query.value.toLowerCase().trim();
-    if (!q) return items.value;
+    const source = items.value ?? [];
 
-    return items.value.filter((item) =>
+    if (!q) return source;
+
+    return source.filter((item) =>
       fields.some((field) => {
         const value = String(item[field] ?? '').toLowerCase();
         return value.includes(q);

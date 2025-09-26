@@ -8,12 +8,10 @@
       <h1 class="text-xl font-semibold text-gray-800 dark:text-white text-center">
         Create your Flippr account
       </h1>
-
       <!-- Subheading -->
       <p class="text-sm text-gray-600 dark:text-gray-400 text-center">
         Start learning smarter with flashcards that stick. It only takes a minute to sign up.
       </p>
-
       <!-- Form -->
       <form class="space-y-4" @submit.prevent="handleRegister">
         <!-- Username -->
@@ -28,7 +26,6 @@
             class="form-control border border-gray-300 dark:border-gray-600"
           />
         </div>
-
         <!-- Password -->
         <div>
           <label for="password" class="block text-sm font-medium mb-1"> Password </label>
@@ -41,7 +38,6 @@
             class="form-control border border-gray-300 dark:border-gray-600"
           />
         </div>
-
         <!-- Confirm Password -->
         <div>
           <label for="confirmPassword" class="block text-sm font-medium mb-1">
@@ -55,26 +51,21 @@
             autocomplete="new-password"
             class="form-control border border-gray-300 dark:border-gray-600"
           />
-          />
         </div>
-
         <!-- Error Message -->
-        <p v-if="error" class="text-sm text-red-600 dark:text-red-400 text-center">
-          {{ error }}
+        <p v-if="authStore.error" class="text-sm text-red-600 dark:text-red-400 text-center">
+          {{ authStore.error }}
         </p>
-
         <!-- Submit -->
         <BaseButton
-          :label="loading ? 'Creating account…' : 'Sign Up'"
+          :label="authStore.loading ? 'Creating account…' : 'Sign Up'"
           variant="primary"
-          :disabled="loading"
+          :disabled="authStore.loading"
           type="submit"
           class="w-full"
           aria-label="Create Flippr account"
-          @click="handleRegister"
         />
       </form>
-
       <!-- Login Link -->
       <p class="text-sm text-center text-gray-600 dark:text-gray-400">
         Already have an account?
@@ -90,14 +81,24 @@
 </template>
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import BaseButton from '@/components/BaseButton.vue';
-import { useAuth } from '@/composables/useAuth';
+import { useAuthStore } from '@/stores/authStore';
 
+const router = useRouter();
+const authStore = useAuthStore();
+
+// Form state
+const username = ref('');
+const password = ref('');
 const confirmPassword = ref('');
-const { username, password, error, loading, register } = useAuth();
 
-function handleRegister() {
-  register(confirmPassword.value);
+async function handleRegister() {
+  const result = await authStore.register(username.value, password.value, confirmPassword.value);
+
+  if (result.success) {
+    router.push('/dashboard');
+  }
 }
 </script>
