@@ -23,7 +23,6 @@
 import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid';
 import { ref } from 'vue';
 
-// No inputRef prop needed
 defineProps<{
   modelValue: string;
   placeholder?: string;
@@ -32,10 +31,8 @@ defineProps<{
 
 const emit = defineEmits(['update:modelValue']);
 
-// Local input ref
 const inputEl = ref<HTMLInputElement | null>(null);
 
-// Expose the input element to parent components
 defineExpose({
   inputEl,
   focus: () => inputEl.value?.focus(),

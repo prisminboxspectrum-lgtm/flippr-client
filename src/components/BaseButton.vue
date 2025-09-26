@@ -7,15 +7,15 @@
       variant === 'primary'
         ? disabled
           ? 'bg-blue-600 text-white opacity-50 cursor-not-allowed pointer-events-none'
-          : 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
+          : 'bg-blue-600 text-white hover:bg-blue-700'
         : variant === 'secondary'
           ? disabled
             ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white opacity-50 cursor-not-allowed pointer-events-none'
-            : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 cursor-pointer'
+            : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
           : variant === 'danger'
             ? disabled
               ? 'bg-red-600 text-white opacity-50 cursor-not-allowed pointer-events-none'
-              : 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'
+              : 'bg-red-600 text-white hover:bg-red-700'
             : '',
     ]"
     :aria-label="ariaLabel"
