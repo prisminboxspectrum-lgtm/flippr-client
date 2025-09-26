@@ -58,7 +58,14 @@
               </template>
             </div>
 
-            <p class="text-sm text-gray-600 dark:text-gray-400">{{ cards.length }} cards</p>
+            <!-- Card count: skeleton until cards are loaded -->
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              <span
+                v-if="isCardsLoading"
+                class="inline-block h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"
+              ></span>
+              <span v-else>{{ cards.length }} cards</span>
+            </p>
           </div>
         </div>
       </div>
