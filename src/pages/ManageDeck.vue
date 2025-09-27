@@ -100,77 +100,80 @@
       <transition name="fade" mode="out-in">
         <div>
           <!-- Skeleton rows (loading or not yet loaded) -->
-          <table
-            v-if="isCardsLoading || !cardStore.isCardsLoaded(deckId)"
-            class="w-full text-sm text-left text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
-          >
-            <thead class="bg-gray-100 dark:bg-gray-700">
-              <tr>
-                <th class="px-4 py-3 font-semibold">Question</th>
-                <th class="px-4 py-3 font-semibold">Answer</th>
-                <th class="px-4 py-3 text-right font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
-              <tr v-for="n in 4" :key="n">
-                <td class="px-4 py-3">
-                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse"></div>
-                </td>
-                <td class="px-4 py-3">
-                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6 animate-pulse"></div>
-                </td>
-                <td class="px-4 py-3 text-right">
-                  <div
-                    class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-8 inline-block animate-pulse"
-                  ></div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div v-if="isCardsLoading || !cardStore.isCardsLoaded(deckId)" class="overflow-x-auto">
+            <table
+              class="w-full text-sm text-left text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg"
+            >
+              <thead class="bg-gray-100 dark:bg-gray-700">
+                <tr>
+                  <th class="px-4 py-3 font-semibold">Question</th>
+                  <th class="px-4 py-3 font-semibold">Answer</th>
+                  <th class="px-4 py-3 text-right font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
+                <tr v-for="n in 4" :key="n">
+                  <td class="px-4 py-3">
+                    <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse"></div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6 animate-pulse"></div>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <div
+                      class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-8 inline-block animate-pulse"
+                    ></div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
           <!-- Cards exist -->
-          <table
-            v-else-if="filteredCards.length > 0"
-            class="w-full text-sm text-left text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
-          >
-            <thead class="bg-gray-100 dark:bg-gray-700">
-              <tr>
-                <th class="px-4 py-3 font-semibold">Question</th>
-                <th class="px-4 py-3 font-semibold">Answer</th>
-                <th class="px-4 py-3 text-right font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
-              <tr v-for="card in filteredCards" :key="card.id">
-                <td class="px-4 py-3 max-w-xs truncate" :title="card.question">
-                  {{ card.question }}
-                </td>
-                <td
-                  class="px-4 py-3 max-w-sm truncate text-gray-600 dark:text-gray-300"
-                  :title="card.answer"
-                >
-                  {{ card.answer }}
-                </td>
-                <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <button
-                    aria-label="Edit card"
-                    class="p-1 text-blue-600 hover:text-blue-800 cursor-pointer"
-                    @click="openEditCard(card)"
+          <div v-else-if="filteredCards.length > 0" class="overflow-x-auto">
+            <table
+              class="w-full text-sm text-left text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg"
+            >
+              <thead class="bg-gray-100 dark:bg-gray-700">
+                <tr>
+                  <th class="px-4 py-3 font-semibold">Question</th>
+                  <th class="px-4 py-3 font-semibold">Answer</th>
+                  <th class="px-4 py-3 text-right font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
+                <tr v-for="card in filteredCards" :key="card.id">
+                  <td class="px-4 py-3 max-w-xs truncate" :title="card.question">
+                    {{ card.question }}
+                  </td>
+                  <td
+                    class="px-4 py-3 max-w-sm truncate text-gray-600 dark:text-gray-300"
+                    :title="card.answer"
                   >
-                    <PencilIcon class="h-4 w-4" />
-                  </button>
-                  <button
-                    aria-label="Delete card"
-                    class="p-1 text-red-600 hover:text-red-800 ml-2 cursor-pointer"
-                    @click="deleteCard(card)"
-                  >
-                    <TrashIcon class="h-4 w-4" />
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                    {{ card.answer }}
+                  </td>
+                  <td class="px-4 py-3 text-right whitespace-nowrap">
+                    <button
+                      aria-label="Edit card"
+                      class="p-1 text-blue-600 hover:text-blue-800 cursor-pointer"
+                      @click="openEditCard(card)"
+                    >
+                      <PencilIcon class="h-4 w-4" />
+                    </button>
+                    <button
+                      aria-label="Delete card"
+                      class="p-1 text-red-600 hover:text-red-800 ml-2 cursor-pointer"
+                      @click="deleteCard(card)"
+                    >
+                      <TrashIcon class="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
+          <!-- Empty State (only when loaded + empty) -->
           <!-- Empty State (only when loaded + empty) -->
           <div
             v-else
