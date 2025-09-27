@@ -58,13 +58,13 @@
               </template>
             </div>
 
-            <!-- Card count: skeleton until cards are loaded -->
+            <!-- Card count -->
             <p class="text-sm text-gray-600 dark:text-gray-400">
               <span
-                v-if="isCardsLoading"
+                v-if="hasCards && isCardsLoading"
                 class="inline-block h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"
               ></span>
-              <span v-else>{{ cards.length }} cards</span>
+              <span v-else>{{ cardCountDisplay }}</span>
             </p>
           </div>
         </div>
@@ -96,24 +96,22 @@
         class="mb-4"
       />
 
-      <!-- Cards List -->
-      <div
-        class="overflow-x-auto sm:overflow-visible rounded-lg border border-gray-200 dark:border-gray-700"
-      >
-        <table class="w-full text-sm text-left text-gray-700 dark:text-gray-200">
-          <caption class="sr-only">
-            List of flashcards in this deck
-          </caption>
-          <thead class="bg-gray-100 dark:bg-gray-700">
-            <tr>
-              <th scope="col" class="px-4 py-3 font-semibold">Question</th>
-              <th scope="col" class="px-4 py-3 font-semibold">Answer</th>
-              <th scope="col" class="px-4 py-3 text-right font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
-            <!-- Skeleton rows for cards -->
-            <template v-if="isCardsLoading">
+      <!-- Cards Table / Empty State -->
+      <transition name="fade" mode="out-in">
+        <div>
+          <!-- Skeleton rows (loading or not yet loaded) -->
+          <table
+            v-if="isCardsLoading || !cardStore.isCardsLoaded(deckId)"
+            class="w-full text-sm text-left text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+          >
+            <thead class="bg-gray-100 dark:bg-gray-700">
+              <tr>
+                <th class="px-4 py-3 font-semibold">Question</th>
+                <th class="px-4 py-3 font-semibold">Answer</th>
+                <th class="px-4 py-3 text-right font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
               <tr v-for="n in 4" :key="n">
                 <td class="px-4 py-3">
                   <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse"></div>
@@ -127,16 +125,22 @@
                   ></div>
                 </td>
               </tr>
-            </template>
+            </tbody>
+          </table>
 
-            <!-- Real cards -->
-            <template v-else>
-              <tr v-if="filteredCards.length === 0">
-                <td colspan="3" class="px-4 py-3 text-gray-500 dark:text-gray-400">
-                  No matching cards found.
-                </td>
+          <!-- Cards exist -->
+          <table
+            v-else-if="filteredCards.length > 0"
+            class="w-full text-sm text-left text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+          >
+            <thead class="bg-gray-100 dark:bg-gray-700">
+              <tr>
+                <th class="px-4 py-3 font-semibold">Question</th>
+                <th class="px-4 py-3 font-semibold">Answer</th>
+                <th class="px-4 py-3 text-right font-semibold">Actions</th>
               </tr>
-
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
               <tr v-for="card in filteredCards" :key="card.id">
                 <td class="px-4 py-3 max-w-xs truncate" :title="card.question">
                   {{ card.question }}
@@ -164,10 +168,23 @@
                   </button>
                 </td>
               </tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
+            </tbody>
+          </table>
+
+          <!-- Empty State (only when loaded + empty) -->
+          <div
+            v-else
+            class="py-8 flex flex-col items-center justify-center gap-4 text-gray-500 dark:text-gray-400"
+          >
+            <img
+              :src="emptyCardIllustration"
+              alt="No cards"
+              class="w-40 h-40 sm:w-52 sm:h-52 object-contain dark:invert"
+            />
+            <p class="text-sm text-center">{{ emptyCardMessage }}</p>
+          </div>
+        </div>
+      </transition>
     </section>
 
     <!-- Modals (unchanged) -->
@@ -247,12 +264,21 @@ const cardStore = useCardStore();
 const { deckDetails } = storeToRefs(deckStore);
 
 // Reactive state
-const isDeckLoading = ref(!deckStore.isDeckLoaded(deckId));
-const isCardsLoading = ref(!cardStore.getCards(deckId).length);
-const isLoading = computed(() => isDeckLoading.value || isCardsLoading.value);
-
 const deck = computed(() => deckDetails.value[deckId] ?? null);
 const cards = computed(() => cardStore.getCards(deckId));
+const hasCards = computed(() => (cards.value?.length ?? 0) > 0);
+
+// Better card count logic
+const cardCountDisplay = computed(() => {
+  if (!cardStore.isCardsLoaded(deckId) || isCardsLoading.value) {
+    return null; // will show skeleton
+  }
+  return `${cards.value.length} cards`;
+});
+
+// Respect both local loading state + store cache
+const isDeckLoading = ref(!deckStore.isDeckLoaded(deckId));
+const isCardsLoading = ref(!cardStore.isCardsLoaded(deckId));
 
 // Search
 const { query: cardSearch, filtered: filteredCards } = useSearchFilter(cards, ['question']);
@@ -379,43 +405,38 @@ async function deleteCard(card: Card) {
   }
 }
 
+// Empty state only show "No cards" if loaded and empty
+import emptyCardSvg from '@/assets/empty_card.svg';
+const emptyCardIllustration = emptyCardSvg;
+const emptyCardMessage = computed(() => {
+  if (!cardStore.isCardsLoaded(deckId) || isCardsLoading.value) {
+    return ''; // don’t show message while still loading
+  }
+  return cards.value.length === 0
+    ? 'No cards yet. Click Add Card to create your first one.'
+    : 'No matching cards found.';
+});
+
 // Load deck + cards
 onMounted(async () => {
   try {
-    // Only fetch deck if not cached
     if (!deckStore.isDeckLoaded(deckId)) {
       isDeckLoading.value = true;
       await deckStore.fetchDeckWithCards(deckId);
+      isDeckLoading.value = false;
     }
-    editedTitle.value = deck.value?.title ?? '';
-    isDeckLoading.value = false;
 
-    // Only fetch cards if not already cached
-    if (!cardStore.getCards(deckId).length) {
+    if (!cardStore.isCardsLoaded(deckId)) {
       isCardsLoading.value = true;
       await cardStore.fetchCards(deckId);
+      isCardsLoading.value = false;
     }
+
+    editedTitle.value = deck.value?.title ?? '';
   } catch {
     showError('Failed to load deck.');
-  } finally {
+    isDeckLoading.value = false;
     isCardsLoading.value = false;
   }
 });
-
-// Expose isLoading for testing
-if (import.meta.env.DEV) {
-  (window as any).isLoading = isLoading;
-}
 </script>
-
-<style scoped>
-.card-enter-active,
-.card-leave-active {
-  transition: all 0.3s ease;
-}
-.card-enter-from,
-.card-leave-to {
-  opacity: 0;
-  transform: scale(0.95);
-}
-</style>

@@ -12,7 +12,12 @@ export const useCardStore = defineStore('cardStore', () => {
   let undoTimeout: ReturnType<typeof setTimeout> | null = null;
 
   function getCards(deckId: string): Card[] {
-    return cardsByDeck.value[deckId] ?? [];
+    return cardsByDeck.value[deckId] ?? []; // always an array
+  }
+
+  // Check if cards for a deck are loaded
+  function isCardsLoaded(deckId: string): boolean {
+    return cardsByDeck.value[deckId] !== undefined;
   }
 
   async function fetchCards(deckId: string) {
@@ -99,6 +104,7 @@ export const useCardStore = defineStore('cardStore', () => {
 
     // Getters
     getCards,
+    isCardsLoaded,
 
     // Actions
     fetchCards,
