@@ -174,6 +174,7 @@
           </div>
 
           <!-- Empty State (only when loaded + empty) -->
+          <!-- Empty State (only when loaded + empty) -->
           <div
             v-else
             class="py-8 flex flex-col items-center justify-center gap-4 text-gray-500 dark:text-gray-400"
