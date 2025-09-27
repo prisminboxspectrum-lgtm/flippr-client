@@ -114,7 +114,11 @@
         </div>
 
         <!-- Error Message -->
-        <p v-if="authStore.error" class="text-sm text-red-600 dark:text-red-400 text-center">
+        <p
+          v-if="authStore.error"
+          class="text-sm text-red-600 dark:text-red-400 text-center"
+          aria-live="polite"
+        >
           {{ authStore.error }}
         </p>
 
@@ -148,6 +152,7 @@ import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import BaseButton from '@/components/BaseButton.vue';
+import { useAuthForm } from '@/composables/useAuthForm';
 import { useAuthStore } from '@/stores/authStore';
 
 const router = useRouter();
@@ -184,7 +189,6 @@ const strengthScore = computed(() => {
   return score;
 });
 
-// Single-line validation message
 const passwordMessage = computed(() => {
   if (password.value.length === 0) return '';
   if (!passwordRules.value.minLength) return `At least ${MIN_PASSWORD_LENGTH} characters`;
@@ -196,7 +200,9 @@ const passwordMessage = computed(() => {
   return 'Strong password!';
 });
 
-// Methods
+// Use composable to clear errors automatically
+useAuthForm(authStore, [username, password, confirmPassword]);
+
 async function handleRegister() {
   const result = await authStore.register(username.value, password.value, confirmPassword.value);
   if (result.success) router.push('/dashboard');

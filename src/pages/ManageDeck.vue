@@ -9,7 +9,7 @@
 
         <RouterLink
           to="/dashboard"
-          class="text-base sm:text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 px-2 py-2 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
+          class="text-base sm:text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 px-2 py-2 rounded"
           aria-label="Return to dashboard"
         >
           ← Back to Dashboard
@@ -37,7 +37,7 @@
                 </h2>
                 <button
                   type="button"
-                  class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 cursor-pointer"
+                  class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 cursor-pointer"
                   aria-label="Rename deck"
                   @click="startEditingTitle"
                 >
@@ -99,9 +99,9 @@
       <!-- Cards Table / Empty State -->
       <transition name="fade" mode="out-in">
         <div>
-          <!-- Skeleton rows (loading or not yet loaded) -->
+          <!-- Skeleton rows: show only while loading -->
           <div
-            v-if="isCardsLoading || !cardStore.isCardsLoaded(deckId)"
+            v-if="isCardsLoading"
             class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700"
           >
             <table class="min-w-full text-sm text-left text-gray-700 dark:text-gray-200">
@@ -134,7 +134,7 @@
 
           <!-- Cards exist -->
           <div
-            v-else-if="filteredCards.length > 0"
+            v-else-if="cards.length > 0"
             class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700"
           >
             <table class="min-w-full text-sm text-left text-gray-700 dark:text-gray-200">
@@ -179,9 +179,9 @@
             </table>
           </div>
 
-          <!-- Empty State (only when loaded + empty) -->
+          <!-- Empty state: only if cards fetched and truly empty -->
           <div
-            v-else
+            v-else-if="cardStore.isCardsLoaded(deckId) && cards.length === 0"
             class="py-8 flex flex-col items-center justify-center gap-4 text-gray-500 dark:text-gray-400"
           >
             <img
@@ -261,32 +261,28 @@ import { useCardStore } from '@/stores/cardStore';
 import { useDeckStore } from '@/stores/deckStore';
 import type { Card } from '@/types/types';
 
-// Router + params
 const route = useRoute();
 const router = useRouter();
 const deckId = String(route.params.id);
 
-// Stores
 const deckStore = useDeckStore();
 const cardStore = useCardStore();
 const { deckDetails } = storeToRefs(deckStore);
 
-// Reactive state
+// Computed deck & cards
 const deck = computed(() => deckDetails.value[deckId] ?? null);
 const cards = computed(() => cardStore.getCards(deckId));
 const hasCards = computed(() => (cards.value?.length ?? 0) > 0);
 
-// Better card count logic
+// Loading state purely from store
+const isDeckLoading = computed(() => !deckStore.isDeckLoaded(deckId) && deckStore.loading);
+const isCardsLoading = computed(() => !cardStore.isCardsLoaded(deckId) && cardStore.isLoading);
+
+// Card count display
 const cardCountDisplay = computed(() => {
-  if (!cardStore.isCardsLoaded(deckId) || isCardsLoading.value) {
-    return null; // will show skeleton
-  }
+  if (!cardStore.isCardsLoaded(deckId) || isCardsLoading.value) return null;
   return `${cards.value.length} cards`;
 });
-
-// Respect both local loading state + store cache
-const isDeckLoading = ref(!deckStore.isDeckLoaded(deckId));
-const isCardsLoading = ref(!cardStore.isCardsLoaded(deckId));
 
 // Search
 const { query: cardSearch, filtered: filteredCards } = useSearchFilter(cards, ['question']);
@@ -340,11 +336,24 @@ async function saveTitle() {
   isEditingTitle.value = false;
 }
 
+// Modals helpers
 function closeAddCardModal() {
   isAddCardOpen.value = false;
   newCard.value = { question: '', answer: '' };
 }
 
+function openEditCard(card: Card) {
+  if (!card.id) return;
+  editedCard.value = { ...card };
+  isEditCardOpen.value = true;
+}
+
+function closeEditCardModal() {
+  isEditCardOpen.value = false;
+  editedCard.value = { ...blankCard };
+}
+
+// Card actions
 async function handleAddCard(e: Event) {
   e.preventDefault();
   const q = newCard.value.question.trim();
@@ -359,17 +368,6 @@ async function handleAddCard(e: Event) {
   } finally {
     closeAddCardModal();
   }
-}
-
-function openEditCard(card: Card) {
-  if (!card.id) return console.error('Card has no id:', card);
-  editedCard.value = { ...card };
-  isEditCardOpen.value = true;
-}
-
-function closeEditCardModal() {
-  isEditCardOpen.value = false;
-  editedCard.value = { ...blankCard };
 }
 
 async function saveEditedCard(e: Event) {
@@ -413,38 +411,25 @@ async function deleteCard(card: Card) {
   }
 }
 
-// Empty state only show "No cards" if loaded and empty
+// Empty state
 import emptyCardSvg from '@/assets/empty_card.svg';
 const emptyCardIllustration = emptyCardSvg;
 const emptyCardMessage = computed(() => {
-  if (!cardStore.isCardsLoaded(deckId) || isCardsLoading.value) {
-    return ''; // don’t show message while still loading
-  }
+  if (!cardStore.isCardsLoaded(deckId) || isCardsLoading.value) return '';
   return cards.value.length === 0
     ? 'No cards yet. Click Add Card to create your first one.'
     : 'No matching cards found.';
 });
 
-// Load deck + cards
+// Fetch data if not already loaded
 onMounted(async () => {
   try {
-    if (!deckStore.isDeckLoaded(deckId)) {
-      isDeckLoading.value = true;
-      await deckStore.fetchDeckWithCards(deckId);
-      isDeckLoading.value = false;
-    }
-
-    if (!cardStore.isCardsLoaded(deckId)) {
-      isCardsLoading.value = true;
-      await cardStore.fetchCards(deckId);
-      isCardsLoading.value = false;
-    }
+    if (!deckStore.isDeckLoaded(deckId)) await deckStore.fetchDeckWithCards(deckId);
+    if (!cardStore.isCardsLoaded(deckId)) await cardStore.fetchCards(deckId);
 
     editedTitle.value = deck.value?.title ?? '';
   } catch {
     showError('Failed to load deck.');
-    isDeckLoading.value = false;
-    isCardsLoading.value = false;
   }
 });
 </script>

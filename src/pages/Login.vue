@@ -91,32 +91,29 @@
 
 <script setup lang="ts">
 import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline';
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import BaseButton from '@/components/BaseButton.vue';
+import { useAuthForm } from '@/composables/useAuthForm';
 import { useAuthStore } from '@/stores/authStore';
 
 const router = useRouter();
 const authStore = useAuthStore();
 
-// Form state
 const username = ref('');
 const password = ref('');
 const showPassword = ref(false);
 
-onMounted(() => {
-  if (authStore.isLoggedIn) {
-    router.push('/dashboard');
-  }
-});
+// Use composable to handle clearing errors
+useAuthForm(authStore, [username, password]);
+
+// Redirect if already logged in
+if (authStore.isLoggedIn) router.push('/dashboard');
 
 async function handleLogin() {
   const result = await authStore.login(username.value, password.value);
-
-  if (result.success) {
-    router.push('/dashboard');
-  }
+  if (result.success) router.push('/dashboard');
 }
 
 function togglePassword() {

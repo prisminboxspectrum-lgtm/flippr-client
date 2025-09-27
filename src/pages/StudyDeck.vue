@@ -7,7 +7,7 @@
       </h1>
       <RouterLink
         to="/dashboard"
-        class="text-base sm:text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 px-2 py-2 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
+        class="text-base sm:text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 px-2 py-2 rounded"
         aria-label="Return to dashboard"
       >
         ← Back to Dashboard
@@ -70,7 +70,7 @@
       <div v-else-if="deck" class="w-full max-w-md">
         <!-- Flip Card -->
         <div
-          class="flip-card w-full h-64 sm:h-72 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+          class="flip-card w-full h-64 sm:h-72 cursor-pointer"
           role="button"
           tabindex="0"
           :aria-pressed="showAnswer"

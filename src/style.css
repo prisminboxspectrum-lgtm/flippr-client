@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 
 @layer base {
+  /* Base typography */
   body {
     @apply font-sans text-base leading-relaxed;
   }
@@ -14,8 +15,14 @@
     @apply bg-gray-900 text-gray-100;
   }
 
+  /* Global focus-visible style for accessibility */
   :focus-visible {
-    @apply outline-none ring-2 ring-offset-2 ring-indigo-500;
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2 rounded-md;
+  }
+
+  /* Dark mode variant for focus ring */
+  html.dark :focus-visible {
+    @apply ring-offset-gray-800;
   }
 
   :root {
@@ -26,15 +33,21 @@
     color-scheme: dark;
   }
 
+  /* Form controls */
   .form-control {
     @apply w-full px-3 py-2 rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white text-base;
   }
 
+  /* Buttons and interactive roles */
   button,
-  [role='button'] {
+  [role='button'],
+  a,
+  input,
+  select,
+  textarea {
     cursor: pointer;
   }
 }
 
-/* Define the dark mode variant */
+/* Tailwind dark variant definition */
 @custom-variant dark (&:where(.dark, .dark *));
