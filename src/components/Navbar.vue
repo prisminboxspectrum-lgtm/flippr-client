@@ -20,10 +20,11 @@
           <button
             class="sm:hidden p-2 rounded"
             aria-label="Toggle navigation menu"
+            :aria-expanded="isOpen"
             @click="isOpen = !isOpen"
           >
-            <Bars3Icon v-if="!isOpen" class="h-6 w-6 text-gray-700 dark:text-gray-200" />
-            <XMarkIcon v-else class="h-6 w-6 text-gray-700 dark:text-gray-200" />
+            <Bars3Icon v-if="!isOpen" class="h-7 w-7 text-gray-700 dark:text-gray-200" />
+            <XMarkIcon v-else class="h-7 w-7 text-gray-700 dark:text-gray-200" />
           </button>
 
           <!-- Desktop nav links + dark mode -->
@@ -73,43 +74,53 @@
       </div>
 
       <!-- Mobile nav links overlay -->
-      <div
-        v-if="isOpen"
-        class="sm:hidden absolute top-full left-0 w-full bg-gray-100 dark:bg-gray-800 shadow-md z-50 py-4 px-4"
-      >
-        <RouterLink to="/dashboard" class="block hover:underline mb-2">Dashboard</RouterLink>
-        <button
-          class="block text-left w-full hover:underline text-gray-700 dark:text-gray-300 cursor-pointer mb-2"
-          @click="logout"
-        >
-          Logout
-        </button>
-
-        <!-- Dark mode toggle - Mobile -->
+      <transition name="slide-fade">
         <div
-          class="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-600"
+          v-if="isOpen"
+          class="sm:hidden absolute top-full left-0 w-full bg-gray-100 dark:bg-gray-800 shadow-md z-50 px-4 overflow-hidden"
         >
-          <span class="font-medium text-gray-700 dark:text-gray-200">Dark Mode</span>
-          <button
-            :class="[
-              'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out',
-              isDark ? 'bg-blue-600' : 'bg-gray-300',
-            ]"
-            role="switch"
-            :aria-checked="isDark"
-            :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
-            @click="toggle"
-          >
-            <span class="sr-only">Toggle dark mode</span>
-            <span
-              :class="[
-                'inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-200 ease-in-out',
-                isDark ? 'translate-x-6' : 'translate-x-1',
-              ]"
-            ></span>
-          </button>
+          <div class="flex flex-col space-y-3 py-4 text-lg">
+            <RouterLink
+              to="/dashboard"
+              class="block py-3 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
+            >
+              Dashboard
+            </RouterLink>
+
+            <button
+              class="block text-left w-full py-3 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 cursor-pointer"
+              @click="logout"
+            >
+              Logout
+            </button>
+
+            <!-- Dark mode toggle - Mobile -->
+            <div
+              class="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-600"
+            >
+              <span class="font-medium text-gray-700 dark:text-gray-200">Dark Mode</span>
+              <button
+                :class="[
+                  'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out',
+                  isDark ? 'bg-blue-600' : 'bg-gray-300',
+                ]"
+                role="switch"
+                :aria-checked="isDark"
+                :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+                @click="toggle"
+              >
+                <span class="sr-only">Toggle dark mode</span>
+                <span
+                  :class="[
+                    'inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-200 ease-in-out',
+                    isDark ? 'translate-x-6' : 'translate-x-1',
+                  ]"
+                ></span>
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      </transition>
     </div>
   </nav>
 </template>
@@ -132,3 +143,15 @@ function logout() {
   router.push('/login');
 }
 </script>
+
+<style scoped>
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.3s ease;
+}
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+</style>
