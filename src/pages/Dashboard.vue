@@ -26,38 +26,42 @@
         class="mb-4"
       />
 
-      <!-- Deck Grid or Empty State -->
+      <!-- Deck Grid / Skeleton / Empty State -->
       <transition name="fade" mode="out-in">
-        <div
-          v-if="loading"
-          key="skeletons"
-          class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-        >
-          <DeckSkeleton v-for="n in [...Array(batchSize).keys()]" :key="n" />
+        <div key="deck-states">
+          <!-- Loading Skeletons -->
+          <div v-if="loading" class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            <DeckSkeleton v-for="n in [...Array(batchSize).keys()]" :key="n" />
+          </div>
+
+          <!-- Decks Grid -->
+          <div
+            v-else-if="filteredDecks.length > 0"
+            class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 text-gray-700 dark:text-gray-300"
+          >
+            <Deck v-for="deck in filteredDecks ?? []" :key="deck.id" :deck="deck" />
+          </div>
+
+          <!-- Empty State -->
+          <div
+            v-else
+            class="text-gray-500 dark:text-gray-400 py-8 flex flex-col items-center justify-center gap-4"
+          >
+            <img
+              :src="emptyDeckIllustration"
+              alt="No decks"
+              class="w-48 h-48 sm:w-56 sm:h-56 object-contain dark:invert"
+            />
+
+            <p class="text-sm text-center">
+              {{ decks.length === 0 ? 'No decks found.' : 'No matching decks found.' }}
+            </p>
+          </div>
         </div>
       </transition>
 
-      <transition name="fade" mode="out-in">
-        <div
-          v-if="!loading && filteredDecks.length > 0"
-          key="decks"
-          class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 text-gray-700 dark:text-gray-300"
-        >
-          <Deck v-for="deck in filteredDecks ?? []" :key="deck.id" :deck="deck" />
-        </div>
-      </transition>
-
-      <transition name="fade" mode="out-in">
-        <div
-          v-if="!loading && filteredDecks.length === 0"
-          key="empty"
-          class="text-gray-500 dark:text-gray-400"
-        >
-          No matching decks found.
-        </div>
-      </transition>
-
-      <div v-if="hasMore" class="mt-4 text-center">
+      <!-- Load More -->
+      <div v-if="hasMore && filteredDecks.length > 0" class="mt-4 text-center">
         <BaseButton label="Load More" variant="secondary" @click="loadMoreDecks" />
       </div>
 
@@ -95,7 +99,7 @@
 <script setup lang="ts">
 import { PlusIcon } from '@heroicons/vue/20/solid';
 import { storeToRefs } from 'pinia';
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import BaseButton from '@/components/BaseButton.vue';
 import BaseModal from '@/components/BaseModal.vue';
@@ -108,28 +112,39 @@ import { useToast } from '@/composables/useToast';
 import { useAuthStore } from '@/stores/authStore';
 import { useDeckStore } from '@/stores/deckStore';
 
+// Stores
 const deckStore = useDeckStore();
 const authStore = useAuthStore();
-
 const { decks, hasMore, loading } = storeToRefs(deckStore);
 const batchSize = deckStore.batchSize;
 
+// Toast
 const { success, error: showError } = useToast();
 
+// Deck actions
 const { loadInitialDecks, loadMoreDecks, createNewDeck } = deckStore;
 
+// Add deck modal
 const showAddDeck = ref(false);
 const newDeckTitle = ref('');
 
+// Search filter
 const { query: deckSearch, filtered: filteredDecks } = useSearchFilter(decks, ['title']);
 
+// Empty state
+import emptyDeckSvg from '@/assets/empty_deck.svg';
+const emptyDeckIllustration = emptyDeckSvg;
+
+// Lifecycle
 onMounted(async () => {
-  // Only load decks if user is authenticated
   if (authStore.isLoggedIn) {
-    await loadInitialDecks();
+    if (!deckStore.ready) {
+      await loadInitialDecks();
+    }
   }
 });
 
+// Methods
 function openAddDeck() {
   showAddDeck.value = true;
 }

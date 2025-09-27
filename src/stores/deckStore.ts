@@ -57,7 +57,6 @@ export const useDeckStore = defineStore('deckStore', () => {
     hasMore.value = true;
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // 2-second delay
       const response = await getDecks(offset.value, batchSize);
       const summaries = response.data.decks as DeckSummary[];
       decks.value.push(...summaries);
@@ -130,12 +129,24 @@ export const useDeckStore = defineStore('deckStore', () => {
 
   async function deleteDeck(id: string) {
     try {
+      // Call API to delete
       await deleteDeckRequest(id);
+
+      // Immediately update decks array
       decks.value = decks.value.filter((d) => d.id !== id);
+
+      // Remove detailed info
       delete deckDetails.value[id];
+
+      // Prevent "Load More" showing if no decks left
+      if (decks.value.length === 0) {
+        hasMore.value = false;
+        ready.value = true; // mark store ready
+        loading.value = false; // optional, for safety
+      }
     } catch (err) {
       console.error('Failed to delete deck:', err);
-      throw err; // important
+      throw err;
     }
   }
 
@@ -143,6 +154,8 @@ export const useDeckStore = defineStore('deckStore', () => {
     try {
       const response = await getDeckWithCards(deckId);
       const deckDetail: DeckDetail = response.data;
+
+      console.log('loadInitialDecks called');
 
       // Cache full detail
       deckDetails.value[deckId] = deckDetail;
