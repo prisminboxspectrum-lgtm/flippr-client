@@ -100,13 +100,16 @@
       <transition name="fade" mode="out-in">
         <div>
           <!-- Skeleton rows (loading or not yet loaded) -->
-          <div v-if="isCardsLoading || !cardStore.isCardsLoaded(deckId)" class="overflow-x-auto">
-            <table
-              class="w-full text-sm text-left text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg"
-            >
+          <div
+            v-if="isCardsLoading || !cardStore.isCardsLoaded(deckId)"
+            class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700"
+          >
+            <table class="min-w-full text-sm text-left text-gray-700 dark:text-gray-200">
               <thead class="bg-gray-100 dark:bg-gray-700">
                 <tr>
-                  <th class="px-4 py-3 font-semibold">Question</th>
+                  <th class="px-4 py-3 font-semibold first:rounded-tl-lg last:rounded-tr-lg">
+                    Question
+                  </th>
                   <th class="px-4 py-3 font-semibold">Answer</th>
                   <th class="px-4 py-3 text-right font-semibold">Actions</th>
                 </tr>
@@ -130,13 +133,16 @@
           </div>
 
           <!-- Cards exist -->
-          <div v-else-if="filteredCards.length > 0" class="overflow-x-auto">
-            <table
-              class="w-full text-sm text-left text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg"
-            >
+          <div
+            v-else-if="filteredCards.length > 0"
+            class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700"
+          >
+            <table class="min-w-full text-sm text-left text-gray-700 dark:text-gray-200">
               <thead class="bg-gray-100 dark:bg-gray-700">
                 <tr>
-                  <th class="px-4 py-3 font-semibold">Question</th>
+                  <th class="px-4 py-3 font-semibold first:rounded-tl-lg last:rounded-tr-lg">
+                    Question
+                  </th>
                   <th class="px-4 py-3 font-semibold">Answer</th>
                   <th class="px-4 py-3 text-right font-semibold">Actions</th>
                 </tr>
@@ -173,7 +179,6 @@
             </table>
           </div>
 
-          <!-- Empty State (only when loaded + empty) -->
           <!-- Empty State (only when loaded + empty) -->
           <div
             v-else
