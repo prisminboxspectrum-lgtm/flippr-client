@@ -25,7 +25,7 @@
             type="text"
             required
             autocomplete="username"
-            class="form-control border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="form-control border border-gray-300 dark:border-gray-600"
             aria-label="Username"
           />
         </div>
@@ -40,12 +40,12 @@
               :type="showPassword ? 'text' : 'password'"
               required
               autocomplete="current-password"
-              class="form-control border border-gray-300 dark:border-gray-600 pr-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="form-control border border-gray-300 dark:border-gray-600 pr-10"
               aria-label="Password"
             />
             <button
               type="button"
-              class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none"
+              class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 dark:text-gray-400 cursor-pointer"
               @click="togglePassword"
               :aria-pressed="showPassword"
               :aria-label="showPassword ? 'Hide password' : 'Show password'"
@@ -78,10 +78,7 @@
       <!-- Register Link -->
       <p class="text-sm text-center text-gray-600 dark:text-gray-400">
         New to Flippr?
-        <RouterLink
-          to="/register"
-          class="text-blue-600 dark:text-blue-400 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
+        <RouterLink to="/register" class="text-blue-600 dark:text-blue-400">
           Create an account
         </RouterLink>
       </p>

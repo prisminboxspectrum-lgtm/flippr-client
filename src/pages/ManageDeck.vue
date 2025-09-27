@@ -23,7 +23,7 @@
           aria-live="polite"
         >
           <!-- Skeletons for deck info -->
-          <div v-if="isDeckLoading">
+          <div v-if="!deck">
             <div class="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-2 animate-pulse"></div>
             <div class="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
           </div>
@@ -33,7 +33,7 @@
             <div class="flex items-center gap-2">
               <template v-if="!isEditingTitle">
                 <h2 class="text-lg font-semibold text-gray-700 dark:text-white">
-                  {{ deck?.title || 'Untitled Deck' }}
+                  {{ deck.title }}
                 </h2>
                 <button
                   type="button"
@@ -61,7 +61,7 @@
             <!-- Card count -->
             <p class="text-sm text-gray-600 dark:text-gray-400">
               <span
-                v-if="hasCards && isCardsLoading"
+                v-if="isCardsLoading"
                 class="inline-block h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"
               ></span>
               <span v-else>{{ cardCountDisplay }}</span>
@@ -134,7 +134,7 @@
 
           <!-- Cards exist -->
           <div
-            v-else-if="cards.length > 0"
+            v-else-if="hasCards"
             class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700"
           >
             <table class="min-w-full text-sm text-left text-gray-700 dark:text-gray-200">
@@ -179,9 +179,9 @@
             </table>
           </div>
 
-          <!-- Empty state: only if cards fetched and truly empty -->
+          <!-- Empty state: only if deck loaded, cards fetched, and truly empty -->
           <div
-            v-else-if="cardStore.isCardsLoaded(deckId) && cards.length === 0"
+            v-else-if="!isDeckLoading && !isCardsLoading && cards.length === 0"
             class="py-8 flex flex-col items-center justify-center gap-4 text-gray-500 dark:text-gray-400"
           >
             <img
@@ -195,7 +195,7 @@
       </transition>
     </section>
 
-    <!-- Modals (unchanged) -->
+    <!-- Modals -->
     <BaseModal
       :is-open="isAddCardOpen"
       title="Add a New Card"

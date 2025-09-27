@@ -21,7 +21,7 @@
             type="text"
             required
             autocomplete="username"
-            class="form-control border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="form-control border border-gray-300 dark:border-gray-600"
           />
         </div>
 
@@ -35,11 +35,11 @@
               :type="showPassword ? 'text' : 'password'"
               required
               autocomplete="new-password"
-              class="form-control border border-gray-300 dark:border-gray-600 pr-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="form-control border border-gray-300 dark:border-gray-600 pr-10"
             />
             <button
               type="button"
-              class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none cursor-pointer"
+              class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 dark:text-gray-400 cursor-pointer"
               @click="togglePassword"
               :aria-pressed="showPassword"
               :aria-label="showPassword ? 'Hide password' : 'Show password'"
@@ -52,7 +52,7 @@
             </button>
           </div>
 
-          <!-- Password Strength & Validation (single line) -->
+          <!-- Password Strength & Validation -->
           <div v-if="password.length > 0" class="mt-2">
             <div class="h-2 w-full rounded bg-gray-300 dark:bg-gray-700">
               <div
@@ -89,11 +89,11 @@
               :type="showConfirmPassword ? 'text' : 'password'"
               required
               autocomplete="new-password"
-              class="form-control border border-gray-300 dark:border-gray-600 pr-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="form-control border border-gray-300 dark:border-gray-600 pr-10"
             />
             <button
               type="button"
-              class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none cursor-pointer"
+              class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 dark:text-gray-400 cursor-pointer"
               @click="toggleConfirmPassword"
               :aria-pressed="showConfirmPassword"
               :aria-label="showConfirmPassword ? 'Hide password' : 'Show password'"
@@ -135,10 +135,7 @@
 
       <p class="text-sm text-center text-gray-600 dark:text-gray-400">
         Already have an account?
-        <RouterLink
-          to="/login"
-          class="text-blue-600 dark:text-blue-400 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
+        <RouterLink to="/login" class="text-blue-600 dark:text-blue-400 hover:underline">
           Log in
         </RouterLink>
       </p>
