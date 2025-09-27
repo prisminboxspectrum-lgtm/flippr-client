@@ -101,7 +101,7 @@
         <div>
           <!-- Skeleton rows: show only while loading -->
           <div
-            v-if="isCardsLoading"
+            v-if="showSkeleton"
             class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700"
           >
             <table class="min-w-full text-sm text-left text-gray-700 dark:text-gray-200">
@@ -179,9 +179,9 @@
             </table>
           </div>
 
-          <!-- Empty state: only if deck loaded, cards fetched, and truly empty -->
+          <!-- Empty state -->
           <div
-            v-else-if="!isDeckLoading && !isCardsLoading && cards.length === 0"
+            v-else-if="showEmptyState"
             class="py-8 flex flex-col items-center justify-center gap-4 text-gray-500 dark:text-gray-400"
           >
             <img
@@ -269,14 +269,29 @@ const deckStore = useDeckStore();
 const cardStore = useCardStore();
 const { deckDetails } = storeToRefs(deckStore);
 
+// Initial loading flag
+const isInitialLoading = ref(true);
+
 // Computed deck & cards
 const deck = computed(() => deckDetails.value[deckId] ?? null);
 const cards = computed(() => cardStore.getCards(deckId));
-const hasCards = computed(() => (cards.value?.length ?? 0) > 0);
+const hasCards = computed(() => (filteredCards.value?.length ?? 0) > 0);
 
-// Loading state purely from store
+// Loading state
 const isDeckLoading = computed(() => !deckStore.isDeckLoaded(deckId) && deckStore.loading);
 const isCardsLoading = computed(() => !cardStore.isCardsLoaded(deckId) && cardStore.isLoading);
+
+// Skeleton & empty state flags
+const showSkeleton = computed(
+  () => isInitialLoading.value || isDeckLoading.value || isCardsLoading.value
+);
+const showEmptyState = computed(() => {
+  // Only show after both deck and cards are loaded
+  if (isDeckLoading.value || isCardsLoading.value) return false;
+
+  // Show if either deck has no cards, or search yields no results
+  return cards.value.length === 0 || filteredCards.value.length === 0;
+});
 
 // Card count display
 const cardCountDisplay = computed(() => {
@@ -405,7 +420,13 @@ async function deleteDeck(e: Event) {
 async function deleteCard(card: Card) {
   try {
     await cardStore.removeCard(deckId, card.id);
-    success(`Card "${card.question}" deleted.`);
+    success({
+      message: `Card "${card.question}" deleted.`,
+      action: {
+        label: 'UNDO',
+        onClick: () => cardStore.undoDeleteCard(deckId),
+      },
+    });
   } catch {
     showError('Failed to delete card.');
   }
@@ -430,6 +451,8 @@ onMounted(async () => {
     editedTitle.value = deck.value?.title ?? '';
   } catch {
     showError('Failed to load deck.');
+  } finally {
+    isInitialLoading.value = false; // <-- mark initial loading finished
   }
 });
 </script>

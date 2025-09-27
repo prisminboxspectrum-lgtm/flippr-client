@@ -29,7 +29,7 @@ export function useToast() {
                       class: 'ml-2 text-blue-500 hover:underline focus:outline-none',
                       onClick: () => {
                         options.action?.onClick();
-                        toast.clear(); // optional: clear toast after undo
+                        toast.clear();
                       },
                     },
                     options.action.label
