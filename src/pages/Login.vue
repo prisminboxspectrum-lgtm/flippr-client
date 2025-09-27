@@ -88,7 +88,7 @@
 
 <script setup lang="ts">
 import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline';
-import { ref } from 'vue';
+import { ref, watchEffect } from 'vue';
 import { useRouter } from 'vue-router';
 
 import BaseButton from '@/components/BaseButton.vue';
@@ -102,11 +102,14 @@ const username = ref('');
 const password = ref('');
 const showPassword = ref(false);
 
-// Use composable to handle clearing errors
+// Clear errors automatically on form mount & input change
 useAuthForm(authStore, [username, password]);
 
-// Redirect if already logged in
-if (authStore.isLoggedIn) router.push('/dashboard');
+watchEffect(() => {
+  if (authStore.isLoggedIn && !authStore.isTokenExpired) {
+    router.push('/dashboard');
+  }
+});
 
 async function handleLogin() {
   const result = await authStore.login(username.value, password.value);

@@ -1,32 +1,43 @@
 import axios from 'axios';
 
+import { useAuthStore } from '@/stores/authStore';
+import { notifySessionExpired } from '@/utils/session';
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
-  timeout: 10000, // Optional: 10s timeout for slow networks
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  timeout: 10000,
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// Attach token to every request if available
+// Request interceptor
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
+  const authStore = useAuthStore();
+
+  if (authStore.token) {
     config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers.Authorization = `Bearer ${authStore.token}`;
   }
+
+  // Only notify if token is missing or expired AND we're not in the middle of login
+  if (authStore.isTokenExpired && !authStore.loading) {
+    authStore.logout();
+    notifySessionExpired();
+    return Promise.reject(new axios.Cancel('Token expired'));
+  }
+
   return config;
 });
 
-// Handle token expiration or invalid token globally
+// Response interceptor
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    const authStore = useAuthStore();
     const status = error.response?.status;
 
     if (status === 401 || status === 403) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      authStore.logout();
+      notifySessionExpired(); // toast only once
     }
 
     return Promise.reject(error);

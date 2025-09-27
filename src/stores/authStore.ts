@@ -1,38 +1,64 @@
-// stores/authStore.ts
 import { AxiosError } from 'axios';
+import { jwtDecode } from 'jwt-decode';
 import { defineStore } from 'pinia';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import { loginUser, registerUser } from '@/services/authService';
 import { useDeckStore } from '@/stores/deckStore';
+import type { JwtPayload } from '@/types/jwt';
+import { resetSessionExpiredFlag } from '@/utils/session';
 
 export const useAuthStore = defineStore('authStore', () => {
-  // State
-  const error = ref('');
-  const loading = ref(false);
   const token = ref<string | null>(localStorage.getItem('token'));
-  const user = ref(null);
+  const user = ref<JwtPayload | null>(null);
+  const loading = ref(false);
+  const error = ref('');
 
-  // Computed
+  // Decode token on init
+  const decodeToken = (tokenValue: string) => {
+    try {
+      const decoded = jwtDecode<JwtPayload>(tokenValue);
+      if (decoded.exp < Date.now() / 1000) throw new Error('Token expired');
+      user.value = decoded;
+      return true;
+    } catch {
+      token.value = null;
+      user.value = null;
+      return false;
+    }
+  };
+
+  if (token.value) decodeToken(token.value);
+
   const isLoggedIn = computed(() => !!token.value);
+  const isTokenExpired = computed(() => {
+    if (!token.value || !user.value) return true;
+    return user.value.exp < Date.now() / 1000;
+  });
 
-  // Helper function
-  function resetDeckStore() {
-    const deckStore = useDeckStore();
-    deckStore.resetStore();
-  }
+  watch(token, (newToken) => {
+    if (newToken) decodeToken(newToken);
+    else user.value = null;
+  });
 
-  // Login
+  const resetDeckStore = () => useDeckStore().resetStore();
+
   async function login(username: string, password: string) {
     error.value = '';
     loading.value = true;
-
     try {
       const response = await loginUser(username, password);
       const tokenValue = response.data.token;
+
+      if (!decodeToken(tokenValue)) {
+        error.value = 'Received invalid token';
+        return { success: false };
+      }
+
       localStorage.setItem('token', tokenValue);
       token.value = tokenValue;
       resetDeckStore();
+      resetSessionExpiredFlag();
       return { success: true };
     } catch (err: unknown) {
       const axiosError = err as AxiosError<{ message?: string }>;
@@ -43,7 +69,6 @@ export const useAuthStore = defineStore('authStore', () => {
     }
   }
 
-  // Register
   async function register(username: string, password: string, confirmPassword: string) {
     error.value = '';
     loading.value = true;
@@ -56,9 +81,7 @@ export const useAuthStore = defineStore('authStore', () => {
 
     try {
       await registerUser(username, password);
-      // Auto-login after registration - same as your logic
-      const loginResult = await login(username, password);
-      return loginResult;
+      return await login(username, password);
     } catch (err: unknown) {
       const axiosError = err as AxiosError<{ message?: string }>;
       error.value = axiosError.response?.data?.message || 'Registration failed.';
@@ -68,7 +91,6 @@ export const useAuthStore = defineStore('authStore', () => {
     }
   }
 
-  // Logout - same as your composable logout function
   function logout() {
     localStorage.removeItem('token');
     token.value = null;
@@ -77,20 +99,17 @@ export const useAuthStore = defineStore('authStore', () => {
     resetDeckStore();
   }
 
-  // Helper to clear errors (useful for forms)
   function clearError() {
     error.value = '';
   }
 
   return {
-    // State
-    error,
-    loading,
     token,
     user,
-    // Getters
+    loading,
+    error,
     isLoggedIn,
-    // Actions
+    isTokenExpired,
     login,
     register,
     logout,
