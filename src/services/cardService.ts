@@ -1,16 +1,14 @@
-import type { DeckDetail } from '@/types/types';
+import type { Card } from '@/types/types';
 import api from '@/utils/http';
 
-export const getCards = () => api.get('/cards');
+export const getCardsByDeck = (deckId: string) => api.get<Card[]>(`/decks/${deckId}/cards`);
 
 export const createCard = (data: { question: string; answer: string }, deckId: string) =>
-  api.post('/cards', { ...data, deckId });
+  api.post<Card>('/cards', { ...data, deckId });
 
 export const updateCard = (
   cardId: string,
   data: { question: string; answer: string; deckId: string }
-) => api.put(`/cards/${cardId}`, data);
+) => api.put<Card>(`/cards/${cardId}`, data);
 
-export const deleteCard = (cardId: string) => api.delete(`/cards/${cardId}`);
-
-export const getCardsByDeck = (deckId: string) => api.get<DeckDetail>(`/decks/${deckId}/cards`);
+export const deleteCard = (cardId: string) => api.delete<void>(`/cards/${cardId}`);

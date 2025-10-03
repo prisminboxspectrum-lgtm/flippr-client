@@ -1,16 +1,16 @@
-import type { DeckDetail, DeckSummary } from '@/types/types';
+import type { Deck } from '@/types/types';
 import api from '@/utils/http';
 
-export const getDecks = (skip = 0, limit = 12) => {
-  return api.get<{ decks: DeckSummary[]; hasMore: boolean }>(`/decks?skip=${skip}&limit=${limit}`);
-};
-export const createDeck = (deck: { title: string }) => api.post<DeckSummary>('/decks', deck);
+export function getDeck(deckId: string) {
+  return api.get<Deck>(`/decks/${deckId}`);
+}
 
-export const updateDeck = (id: string, deck: Partial<DeckSummary>) =>
-  api.put<DeckSummary>(`/decks/${id}`, deck);
+export const getDecks = (skip = 0, limit = 12) => {
+  return api.get<{ decks: Deck[]; hasMore: boolean }>(`/decks?skip=${skip}&limit=${limit}`);
+};
+
+export const createDeck = (deck: { title: string }) => api.post<Deck>('/decks', deck);
+
+export const updateDeck = (id: string, deck: Partial<Deck>) => api.put<Deck>(`/decks/${id}`, deck);
 
 export const deleteDeck = (id: string) => api.delete(`/decks/${id}`);
-
-export function getDeckWithCards(deckId: string) {
-  return api.get<DeckDetail>(`/decks/${deckId}/cards`);
-}

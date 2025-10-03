@@ -5,9 +5,12 @@ import parser from '@typescript-eslint/parser';
 import prettier from 'eslint-plugin-prettier';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import vueParser from 'vue-eslint-parser';
+import vueTsConfig from '@vue/eslint-config-typescript';
 
 export default [
   js.configs.recommended,
+  vue.configs.recommended,
+  vueTsConfig,
   {
     files: ['**/*.vue'],
     languageOptions: {

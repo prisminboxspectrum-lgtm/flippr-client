@@ -3,13 +3,16 @@
     <section aria-labelledby="manage-heading" role="region">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6 gap-2 flex-wrap">
-        <h1 id="manage-heading" class="text-xl font-semibold text-gray-800 dark:text-white">
+        <h1
+          id="manage-heading"
+          class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white"
+        >
           Manage Deck
         </h1>
 
         <RouterLink
           to="/dashboard"
-          class="text-base sm:text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 px-2 py-2 rounded"
+          class="text-sm sm:text-base text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 px-2 py-1 rounded"
           aria-label="Return to dashboard"
         >
           ← Back to Dashboard
@@ -17,60 +20,14 @@
       </div>
 
       <!-- Deck Info -->
-      <div class="mb-6">
-        <div
-          class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2"
-          aria-live="polite"
-        >
-          <!-- Skeletons for deck info -->
-          <div v-if="!deck">
-            <div class="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-2 animate-pulse"></div>
-            <div class="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-          </div>
+      <DeckInfo
+        :deck="deck"
+        :showSkeleton="showDeckSkeleton"
+        :cardCount="cardCountNumber"
+        @updateTitle="handleUpdateTitle"
+      />
 
-          <!-- Real deck info -->
-          <div v-else>
-            <div class="flex items-center gap-2">
-              <template v-if="!isEditingTitle">
-                <h2 class="text-lg font-semibold text-gray-700 dark:text-white">
-                  {{ deck.title }}
-                </h2>
-                <button
-                  type="button"
-                  class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 cursor-pointer"
-                  aria-label="Rename deck"
-                  @click="startEditingTitle"
-                >
-                  <PencilIcon class="h-4 w-4" aria-hidden="true" />
-                </button>
-              </template>
-
-              <template v-else>
-                <input
-                  ref="titleInput"
-                  v-model="editedTitle"
-                  type="text"
-                  maxLength="50"
-                  class="form-control text-lg font-semibold bg-transparent dark:bg-transparent px-1"
-                  @blur="saveTitle"
-                  @keyup.enter="saveTitle"
-                />
-              </template>
-            </div>
-
-            <!-- Card count -->
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-              <span
-                v-if="isCardsLoading"
-                class="inline-block h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"
-              ></span>
-              <span v-else>{{ cardCountDisplay }}</span>
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Actions: Add + Delete -->
+      <!-- Actions -->
       <div class="mb-4 flex flex-col sm:flex-row gap-2">
         <BaseButton
           label="Add Card"
@@ -88,7 +45,7 @@
         />
       </div>
 
-      <!-- Search Cards -->
+      <!-- Search -->
       <SearchInput
         id="search-cards"
         v-model="cardSearch"
@@ -99,30 +56,28 @@
       <!-- Cards Table / Empty State -->
       <transition name="fade" mode="out-in">
         <div>
-          <!-- Skeleton rows: show only while loading -->
+          <!-- Skeleton rows -->
           <div
-            v-if="showSkeleton"
+            v-if="showCardSkeleton"
             class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700"
           >
-            <table class="min-w-full text-sm text-left text-gray-700 dark:text-gray-200">
+            <table class="min-w-full text-xs sm:text-sm text-left text-gray-700 dark:text-gray-200">
               <thead class="bg-gray-100 dark:bg-gray-700">
                 <tr>
-                  <th class="px-4 py-3 font-semibold first:rounded-tl-lg last:rounded-tr-lg">
-                    Question
-                  </th>
-                  <th class="px-4 py-3 font-semibold">Answer</th>
-                  <th class="px-4 py-3 text-right font-semibold">Actions</th>
+                  <th class="px-3 sm:px-4 py-2 sm:py-3 font-semibold">Question</th>
+                  <th class="px-3 sm:px-4 py-2 sm:py-3 font-semibold">Answer</th>
+                  <th class="px-3 sm:px-4 py-2 sm:py-3 text-right font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
                 <tr v-for="n in 4" :key="n">
-                  <td class="px-4 py-3">
+                  <td class="px-3 sm:px-4 py-2 sm:py-3">
                     <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse"></div>
                   </td>
-                  <td class="px-4 py-3">
+                  <td class="px-3 sm:px-4 py-2 sm:py-3">
                     <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6 animate-pulse"></div>
                   </td>
-                  <td class="px-4 py-3 text-right">
+                  <td class="px-3 sm:px-4 py-2 sm:py-3 text-right">
                     <div
                       class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-8 inline-block animate-pulse"
                     ></div>
@@ -137,38 +92,41 @@
             v-else-if="hasCards"
             class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700"
           >
-            <table class="min-w-full text-sm text-left text-gray-700 dark:text-gray-200">
+            <table class="min-w-full text-xs sm:text-sm text-left text-gray-700 dark:text-gray-200">
               <thead class="bg-gray-100 dark:bg-gray-700">
                 <tr>
-                  <th class="px-4 py-3 font-semibold first:rounded-tl-lg last:rounded-tr-lg">
-                    Question
-                  </th>
-                  <th class="px-4 py-3 font-semibold">Answer</th>
-                  <th class="px-4 py-3 text-right font-semibold">Actions</th>
+                  <th class="px-3 sm:px-4 py-2 sm:py-3 font-semibold">Question</th>
+                  <th class="px-3 sm:px-4 py-2 sm:py-3 font-semibold">Answer</th>
+                  <th class="px-3 sm:px-4 py-2 sm:py-3 text-right font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
                 <tr v-for="card in filteredCards" :key="card.id">
-                  <td class="px-4 py-3 max-w-xs truncate" :title="card.question">
+                  <td
+                    class="px-3 sm:px-4 py-2 sm:py-3 max-w-[10rem] sm:max-w-xs truncate"
+                    :title="card.question"
+                  >
                     {{ card.question }}
                   </td>
                   <td
-                    class="px-4 py-3 max-w-sm truncate text-gray-600 dark:text-gray-300"
+                    class="px-3 sm:px-4 py-2 sm:py-3 max-w-[12rem] sm:max-w-sm truncate text-gray-600 dark:text-gray-300"
                     :title="card.answer"
                   >
                     {{ card.answer }}
                   </td>
-                  <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <td class="px-3 sm:px-4 py-2 sm:py-3 text-right whitespace-nowrap">
                     <button
+                      type="button"
                       aria-label="Edit card"
-                      class="p-1 text-blue-600 hover:text-blue-800 cursor-pointer"
+                      class="p-2 text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 rounded"
                       @click="openEditCard(card)"
                     >
                       <PencilIcon class="h-4 w-4" />
                     </button>
                     <button
+                      type="button"
                       aria-label="Delete card"
-                      class="p-1 text-red-600 hover:text-red-800 ml-2 cursor-pointer"
+                      class="p-2 text-red-600 hover:text-red-800 ml-2 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 rounded"
                       @click="deleteCard(card)"
                     >
                       <TrashIcon class="h-4 w-4" />
@@ -182,14 +140,16 @@
           <!-- Empty state -->
           <div
             v-else-if="showEmptyState"
+            role="status"
+            aria-live="polite"
             class="py-8 flex flex-col items-center justify-center gap-4 text-gray-500 dark:text-gray-400"
           >
             <img
               :src="emptyCardIllustration"
               alt="No cards"
-              class="w-40 h-40 sm:w-52 sm:h-52 object-contain dark:invert"
+              class="w-32 h-32 sm:w-40 sm:h-40 md:w-52 md:h-52 object-contain dark:invert"
             />
-            <p class="text-sm text-center">{{ emptyCardMessage }}</p>
+            <p class="text-sm sm:text-base text-center">{{ emptyCardMessage }}</p>
           </div>
         </div>
       </transition>
@@ -253,13 +213,14 @@ import { useRoute, useRouter } from 'vue-router';
 import BaseButton from '@/components/BaseButton.vue';
 import BaseModal from '@/components/BaseModal.vue';
 import CardForm from '@/components/CardForm.vue';
+import DeckInfo from '@/components/DeckInfo.vue';
 import Layout from '@/components/Layout.vue';
 import SearchInput from '@/components/SearchInput.vue';
 import { useSearchFilter } from '@/composables/useSearchFilter';
 import { useToast } from '@/composables/useToast';
 import { useCardStore } from '@/stores/cardStore';
 import { useDeckStore } from '@/stores/deckStore';
-import type { Card } from '@/types/types';
+import type { Card, Deck } from '@/types/types';
 
 const route = useRoute();
 const router = useRouter();
@@ -267,40 +228,74 @@ const deckId = String(route.params.id);
 
 const deckStore = useDeckStore();
 const cardStore = useCardStore();
-const { deckDetails } = storeToRefs(deckStore);
+const { decks } = storeToRefs(deckStore);
 
-// Initial loading flag
-const isInitialLoading = ref(true);
-
-// Computed deck & cards
-const deck = computed(() => deckDetails.value[deckId] ?? null);
+// Deck & cards
+const deck = computed<Deck | null>(() => decks.value.find((d) => d.id === deckId) ?? null);
 const cards = computed(() => cardStore.getCards(deckId));
-const hasCards = computed(() => (filteredCards.value?.length ?? 0) > 0);
-
-// Loading state
-const isDeckLoading = computed(() => !deckStore.isDeckLoaded(deckId) && deckStore.loading);
-const isCardsLoading = computed(() => !cardStore.isCardsLoaded(deckId) && cardStore.isLoading);
-
-// Skeleton & empty state flags
-const showSkeleton = computed(
-  () => isInitialLoading.value || isDeckLoading.value || isCardsLoading.value
-);
-const showEmptyState = computed(() => {
-  // Only show after both deck and cards are loaded
-  if (isDeckLoading.value || isCardsLoading.value) return false;
-
-  // Show if either deck has no cards, or search yields no results
-  return cards.value.length === 0 || filteredCards.value.length === 0;
-});
-
-// Card count display
-const cardCountDisplay = computed(() => {
-  if (!cardStore.isCardsLoaded(deckId) || isCardsLoading.value) return null;
-  return `${cards.value.length} cards`;
-});
 
 // Search
 const { query: cardSearch, filtered: filteredCards } = useSearchFilter(cards, ['question']);
+
+// Skeleton / empty logic
+const showDeckSkeleton = computed(() => deckStore.loading || !deck.value);
+// Skeleton: show only while loading AND only if deck already has cards
+const showCardSkeleton = computed(() => {
+  if (cardStore.isLoading) {
+    // If we don't know deck yet, or deck has cards, show skeleton
+    if (!deck.value || (deck.value.cardCount ?? 0) > 0) {
+      return true;
+    }
+  }
+  return false;
+});
+
+// Cards exist (once loaded)
+const hasCards = computed(() => {
+  return !cardStore.isLoading && filteredCards.value.length > 0;
+});
+
+// Empty state:
+// - deck is new (cardCount = 0) -> show empty immediately
+// - or deck is existing, cards are done loading, and none found
+const showEmptyState = computed(() => {
+  if (deck.value && (deck.value.cardCount ?? 0) === 0) {
+    // Brand-new deck, no need to flash skeleton
+    return true;
+  }
+
+  // Existing deck: only show empty if we’re done loading AND nothing found
+  return !cardStore.isLoading && filteredCards.value.length === 0;
+});
+
+async function handleUpdateTitle(newTitle: string) {
+  if (!deck.value) return;
+  try {
+    await deckStore.updateDeck({ ...deck.value, title: newTitle });
+    deck.value.title = newTitle;
+    deck.value.dateUpdated = new Date().toISOString();
+    success(`Deck renamed to "${newTitle}"`);
+  } catch {
+    showError('Failed to update deck title.');
+  }
+}
+
+// Empty illustration
+import emptyCardSvg from '@/assets/empty_card.svg';
+const emptyCardIllustration = emptyCardSvg;
+
+const emptyCardMessage = computed(() => {
+  if (showCardSkeleton.value) return '';
+  return cards.value.length === 0
+    ? 'No cards yet. Click Add Card to create your first one.'
+    : 'No matching cards found.';
+});
+
+// Numeric value for DeckInfo prop
+const cardCountNumber = computed(() => {
+  if (!deck.value) return 0;
+  return cardStore.getCards(deckId).length || deck.value.cardCount || 0;
+});
 
 // Toast
 const { success, error: showError } = useToast();
@@ -312,44 +307,16 @@ const isEditCardOpen = ref(false);
 
 // Card state
 const newCard = ref({ question: '', answer: '' });
-const blankCard: Card = { id: '', question: '', answer: '', dateCreated: '', dateUpdated: '' };
+const blankCard: Card = {
+  id: '',
+  deckId: '',
+  userId: '',
+  question: '',
+  answer: '',
+  dateCreated: '',
+  dateUpdated: '',
+};
 const editedCard = ref<Card>({ ...blankCard });
-
-// Title editing
-const isEditingTitle = ref(false);
-const editedTitle = ref('');
-const titleInput = ref<HTMLInputElement | null>(null);
-
-function startEditingTitle() {
-  if (!deck.value) return;
-  editedTitle.value = deck.value.title;
-  isEditingTitle.value = true;
-  nextTick(() => titleInput.value?.focus());
-}
-
-async function saveTitle() {
-  if (!deck.value) return;
-  let newTitle = editedTitle.value.trim();
-  if (!newTitle) newTitle = 'Untitled Deck';
-
-  if (newTitle !== deck.value.title) {
-    try {
-      await deckStore.updateDeck({ ...deck.value, title: newTitle });
-      deck.value.title = newTitle;
-      deck.value.dateUpdated = new Date().toISOString();
-      success(
-        newTitle === 'Untitled Deck'
-          ? 'Name cannot be empty, set to "Untitled Deck"'
-          : `Deck renamed to "${newTitle}"`
-      );
-    } catch {
-      showError('Failed to update deck title.');
-    }
-  }
-
-  editedTitle.value = newTitle;
-  isEditingTitle.value = false;
-}
 
 // Modals helpers
 function closeAddCardModal() {
@@ -432,27 +399,25 @@ async function deleteCard(card: Card) {
   }
 }
 
-// Empty state
-import emptyCardSvg from '@/assets/empty_card.svg';
-const emptyCardIllustration = emptyCardSvg;
-const emptyCardMessage = computed(() => {
-  if (!cardStore.isCardsLoaded(deckId) || isCardsLoading.value) return '';
-  return cards.value.length === 0
-    ? 'No cards yet. Click Add Card to create your first one.'
-    : 'No matching cards found.';
-});
-
-// Fetch data if not already loaded
+// Fetch deck + cards
 onMounted(async () => {
   try {
-    if (!deckStore.isDeckLoaded(deckId)) await deckStore.fetchDeckWithCards(deckId);
-    if (!cardStore.isCardsLoaded(deckId)) await cardStore.fetchCards(deckId);
+    if (!deck.value) deckStore.loading = true;
 
-    editedTitle.value = deck.value?.title ?? '';
-  } catch {
-    showError('Failed to load deck.');
+    if (!cardStore.isCardsLoaded(deckId)) {
+      cardStore.isLoading = true;
+    }
+
+    await Promise.all([
+      deck.value ? null : deckStore.fetchDeck(deckId),
+      cardStore.isCardsLoaded(deckId) ? null : cardStore.fetchCards(deckId),
+    ]);
+  } catch (err) {
+    console.error('Error fetching deck or cards:', err);
+    showError('Failed to load deck or cards.');
   } finally {
-    isInitialLoading.value = false; // <-- mark initial loading finished
+    deckStore.loading = false;
+    cardStore.isLoading = false;
   }
 });
 </script>

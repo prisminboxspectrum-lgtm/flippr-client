@@ -29,8 +29,11 @@
       <!-- Deck Grid / Skeleton / Empty State -->
       <transition name="fade" mode="out-in">
         <div key="deck-states">
-          <!-- Loading Skeletons -->
-          <div v-if="loading" class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <!-- Skeletons: only show while loading, if we expect decks -->
+          <div
+            v-if="loading && !deckStore.ready"
+            class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          >
             <DeckSkeleton v-for="n in [...Array(batchSize).keys()]" :key="n" />
           </div>
 
@@ -39,12 +42,12 @@
             v-else-if="filteredDecks.length > 0"
             class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 text-gray-700 dark:text-gray-300"
           >
-            <Deck v-for="deck in filteredDecks ?? []" :key="deck.id" :deck="deck" />
+            <Deck v-for="deck in filteredDecks" :key="deck.id" :deck="deck" />
           </div>
 
           <!-- Empty State -->
           <div
-            v-else
+            v-else-if="deckStore.ready"
             class="text-gray-500 dark:text-gray-400 py-8 flex flex-col items-center justify-center gap-4"
           >
             <img
@@ -52,7 +55,6 @@
               alt="No decks"
               class="w-48 h-48 sm:w-56 sm:h-56 object-contain dark:invert"
             />
-
             <p class="text-sm text-center">
               {{ decks.length === 0 ? 'No decks found.' : 'No matching decks found.' }}
             </p>
@@ -122,7 +124,7 @@ const batchSize = deckStore.batchSize;
 const { success, error: showError } = useToast();
 
 // Deck actions
-const { loadInitialDecks, loadMoreDecks, createNewDeck } = deckStore;
+const { loadInitialDecks, loadMoreDecks, addDeck } = deckStore;
 
 // Add deck modal
 const showAddDeck = ref(false);
@@ -138,7 +140,7 @@ const emptyDeckIllustration = emptyDeckSvg;
 // Lifecycle
 onMounted(async () => {
   if (authStore.isLoggedIn) {
-    if (!deckStore.ready) {
+    if (!deckStore.ready || decks.value.length < deckStore.batchSize) {
       await loadInitialDecks();
     }
   }
@@ -158,7 +160,7 @@ async function submitDeck(e: Event) {
   if (!title) return;
 
   try {
-    const newDeck = await createNewDeck(title);
+    const newDeck = await addDeck({ title });
     success(`Deck "${newDeck.title}" created successfully!`);
     newDeckTitle.value = '';
     showAddDeck.value = false;

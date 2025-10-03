@@ -20,24 +20,26 @@
         class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2"
         aria-live="polite"
       >
-        <div v-if="isLoading">
-          <!-- Skeleton: title -->
+        <!-- Deck skeleton -->
+        <div v-if="showDeckSkeleton" role="status" aria-live="polite">
           <div class="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-2 animate-pulse"></div>
-          <!-- Skeleton: card count -->
           <div class="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
         </div>
 
         <div v-else-if="deck">
-          <h2 class="text-lg font-semibold text-gray-700 dark:text-white">
+          <h2
+            class="text-lg font-semibold text-gray-700 dark:text-white truncate"
+            :title="deck.title"
+          >
             {{ deck.title }}
           </h2>
-          <p class="text-sm text-gray-600 dark:text-gray-400">
-            Card {{ currentIndex + 1 }} of {{ deck.cards.length }}
+          <p class="text-sm text-gray-600 dark:text-gray-400" aria-live="polite">
+            Card {{ currentIndex + 1 }} of {{ cards.length }}
           </p>
         </div>
 
         <div v-else>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Deck not found.</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400" aria-live="polite">Deck not found.</p>
         </div>
       </div>
     </div>
@@ -46,19 +48,27 @@
     <p
       id="flip-instructions-mobile"
       class="text-sm text-gray-500 dark:text-gray-400 mb-4 sm:hidden text-center"
+      aria-live="polite"
     >
       Tap to reveal the answer. Swipe to switch cards.
     </p>
     <p
       id="flip-instructions-desktop"
       class="hidden sm:block text-sm text-gray-500 dark:text-gray-400 mb-4 text-center"
+      aria-live="polite"
     >
       Click the card or press Enter/Space to see the answer.
     </p>
 
     <!-- Study Area -->
     <section class="flex flex-col items-center justify-center flex-1 text-center">
-      <div v-if="isLoading" class="w-full max-w-md space-y-4">
+      <!-- Cards skeleton -->
+      <div
+        v-if="showCardSkeleton"
+        class="w-full max-w-md space-y-4"
+        role="status"
+        aria-live="polite"
+      >
         <div class="h-64 sm:h-72 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
         <div class="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
         <div class="flex gap-4 justify-center">
@@ -67,7 +77,7 @@
         </div>
       </div>
 
-      <div v-else-if="deck" class="w-full max-w-md">
+      <div v-else-if="deck && cards.length" class="w-full max-w-md">
         <!-- Flip Card -->
         <div
           class="flip-card w-full h-64 sm:h-72 cursor-pointer"
@@ -85,6 +95,7 @@
             class="flip-card-inner w-full h-full transition-transform duration-500 [transform-style:preserve-3d]"
             :class="{ '[transform:rotateY(180deg)]': showAnswer }"
           >
+            <!-- Question side -->
             <div
               class="absolute inset-0 flex flex-col p-6 rounded-lg shadow bg-white dark:bg-gray-800 [backface-visibility:hidden] overflow-y-auto"
               :class="
@@ -92,11 +103,14 @@
                   ? 'justify-center items-center text-center'
                   : 'justify-start items-start text-left'
               "
+              aria-live="polite"
             >
               <p class="text-xl sm:text-lg font-semibold text-gray-800 dark:text-white break-words">
                 {{ currentCard?.question }}
               </p>
             </div>
+
+            <!-- Answer side -->
             <div
               class="absolute inset-0 flex flex-col p-6 rounded-lg shadow bg-white dark:bg-gray-800 [transform:rotateY(180deg)] [backface-visibility:hidden] overflow-y-auto"
               :class="
@@ -104,6 +118,7 @@
                   ? 'justify-center items-center text-center'
                   : 'justify-start items-start text-left'
               "
+              aria-live="polite"
             >
               <p class="text-lg font-medium text-gray-800 dark:text-white break-words">
                 {{ currentCard?.answer }}
@@ -118,13 +133,16 @@
           role="progressbar"
           :aria-valuenow="currentIndex + 1"
           :aria-valuemin="1"
-          :aria-valuemax="deck.cards.length"
+          :aria-valuemax="cards.length"
           aria-label="Study progress"
+          aria-live="polite"
         >
           <div
             class="h-full bg-blue-600 dark:bg-blue-500 transition-all duration-300"
-            :style="{ width: ((currentIndex + 1) / deck.cards.length) * 100 + '%' }"
-          ></div>
+            :style="{ width: ((currentIndex + 1) / cards.length) * 100 + '%' }"
+          >
+            <span class="sr-only"> Card {{ currentIndex + 1 }} of {{ cards.length }} </span>
+          </div>
         </div>
 
         <!-- Controls -->
@@ -141,7 +159,7 @@
           <BaseButton
             label="Next"
             variant="primary"
-            :disabled="currentIndex === deck.cards.length - 1"
+            :disabled="currentIndex === cards.length - 1"
             aria-label="Go to next card"
             aria-keyshortcuts="ArrowRight"
             :icon="ArrowRightIcon"
@@ -151,8 +169,13 @@
         </div>
       </div>
 
-      <div v-else class="flex items-center justify-center min-h-[70vh] text-center">
-        <p class="text-gray-600 dark:text-gray-300">Deck not found.</p>
+      <div
+        v-else
+        class="flex items-center justify-center min-h-[70vh] text-center"
+        role="status"
+        aria-live="polite"
+      >
+        <p class="text-gray-600 dark:text-gray-300">No cards to study.</p>
       </div>
     </section>
   </Layout>
@@ -160,27 +183,36 @@
 
 <script setup lang="ts">
 import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/vue/24/solid';
-import { storeToRefs } from 'pinia';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import BaseButton from '@/components/BaseButton.vue';
 import Layout from '@/components/Layout.vue';
+import { useCardStore } from '@/stores/cardStore';
 import { useDeckStore } from '@/stores/deckStore';
 
 const route = useRoute();
 const deckId = String(route.params.id);
 
 const deckStore = useDeckStore();
-const { deckDetails } = storeToRefs(deckStore);
+const cardStore = useCardStore();
+
+const deck = computed(() => deckStore.decks.find((d) => d.id === deckId) ?? null);
+const cards = computed(() => cardStore.getCards(deckId));
 
 const currentIndex = ref(0);
 const showAnswer = ref(false);
-const isLoading = ref(!deckStore.isDeckLoaded(deckId));
 
-const deck = computed(() => deckDetails.value[deckId] ?? null);
-const currentCard = computed(() => deck?.value?.cards?.[currentIndex.value]);
+// Skeleton logic
+const showDeckSkeleton = computed(() => deckStore.loading || !deck.value);
+const showCardSkeleton = computed(
+  () => cardStore.isLoading || !deck.value || cards.value.length === 0
+);
 
+// Current card
+const currentCard = computed(() => cards.value[currentIndex.value]);
+
+// Touch support
 const touchStartX = ref(0);
 const touchEndX = ref(0);
 
@@ -189,22 +221,21 @@ function toggleAnswer() {
 }
 
 function nextCard() {
-  if (deck.value && currentIndex.value < deck.value.cards.length - 1) {
+  if (currentIndex.value < cards.value.length - 1) {
     currentIndex.value++;
     showAnswer.value = false;
   }
 }
 
 function prevCard() {
-  if (deck.value && currentIndex.value > 0) {
+  if (currentIndex.value > 0) {
     currentIndex.value--;
     showAnswer.value = false;
   }
 }
 
 function handleKeydown(e: KeyboardEvent) {
-  if (!deck.value) return;
-
+  if (!deck.value || !cards.value.length) return;
   const target = e.target as HTMLElement | null;
   const tag = (target?.tagName || '').toLowerCase();
   const isEditable = tag === 'input' || tag === 'textarea' || (target && target.isContentEditable);
@@ -232,12 +263,16 @@ onMounted(async () => {
   window.addEventListener('keydown', handleKeydown, { passive: false });
 
   try {
-    if (!deckStore.isDeckLoaded(deckId)) {
-      isLoading.value = true;
-      await deckStore.fetchDeckWithCards(deckId);
-    }
+    if (!deckStore.isDeckLoaded(deckId)) deckStore.loading = true;
+    if (!cardStore.isCardsLoaded(deckId)) cardStore.isLoading = true;
+
+    await Promise.all([
+      deckStore.isDeckLoaded(deckId) ? null : deckStore.fetchDeck(deckId),
+      cardStore.isCardsLoaded(deckId) ? null : cardStore.fetchCards(deckId),
+    ]);
   } finally {
-    isLoading.value = false;
+    deckStore.loading = false;
+    cardStore.isLoading = false;
   }
 });
 

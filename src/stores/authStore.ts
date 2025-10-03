@@ -15,7 +15,7 @@ export const useAuthStore = defineStore('authStore', () => {
   const error = ref('');
 
   // Decode token on init
-  const decodeToken = (tokenValue: string) => {
+  const decodeToken = (tokenValue: string): boolean => {
     try {
       const decoded = jwtDecode<JwtPayload>(tokenValue);
       if (decoded.exp < Date.now() / 1000) throw new Error('Token expired');
@@ -24,6 +24,7 @@ export const useAuthStore = defineStore('authStore', () => {
     } catch {
       token.value = null;
       user.value = null;
+      localStorage.removeItem('token');
       return false;
     }
   };

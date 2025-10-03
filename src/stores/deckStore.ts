@@ -4,16 +4,14 @@ import { ref } from 'vue';
 import {
   createDeck,
   deleteDeck as deleteDeckRequest,
+  getDeck,
   getDecks,
-  getDeckWithCards,
   updateDeck as updateDeckRequest,
 } from '@/services/deckService';
-import type { DeckDetail, DeckSummary } from '@/types/types';
+import type { Deck } from '@/types/types';
 
 export const useDeckStore = defineStore('deckStore', () => {
-  const decks = ref<DeckSummary[]>([]);
-  const deckDetails = ref<Record<string, DeckDetail>>({});
-
+  const decks = ref<Deck[]>([]);
   const hasMore = ref(true);
   const offset = ref(0);
   const batchSize = 12;
@@ -22,106 +20,77 @@ export const useDeckStore = defineStore('deckStore', () => {
 
   function resetStore() {
     decks.value = [];
-    deckDetails.value = {};
     hasMore.value = true;
     offset.value = 0;
     loading.value = false;
     ready.value = false;
   }
 
-  function toSummary(deck: DeckDetail): DeckSummary {
-    return {
-      id: deck.id,
-      title: deck.title,
-      dateCreated: deck.dateCreated,
-      dateUpdated: deck.dateUpdated,
-      cardCount: deck.cards.length,
-    };
-  }
-
   function isDeckLoaded(deckId: string): boolean {
-    const deck = deckDetails.value[deckId];
-    return !!deck && Array.isArray(deck.cards) && deck.cards.length > 0;
+    return decks.value.some((d) => d.id === deckId);
   }
 
   async function loadInitialDecks() {
+    // Only load if decks are missing or less than batchSize
+    if (loading.value) return;
+
     loading.value = true;
-
-    if (ready.value && decks.value.length >= batchSize) {
-      loading.value = false;
-      return;
-    }
-
-    decks.value = [];
-    offset.value = 0;
-    hasMore.value = true;
-
     try {
+      // Reset if decks is empty or offset is 0
+      if (decks.value.length === 0 || offset.value === 0) {
+        decks.value = [];
+        offset.value = 0;
+        hasMore.value = true;
+      }
+
       const response = await getDecks(offset.value, batchSize);
-      const summaries = response.data.decks as DeckSummary[];
+      const summaries = response.data.decks as Deck[];
+
       decks.value.push(...summaries);
       hasMore.value = response.data.hasMore;
       offset.value += batchSize;
-      ready.value = true;
     } catch (err) {
       console.error('Failed to load decks:', err);
     } finally {
       loading.value = false;
+      ready.value = decks.value.length > 0;
     }
   }
 
   async function loadMoreDecks() {
+    if (loading.value || !hasMore.value) return;
+
+    loading.value = true;
     try {
       const response = await getDecks(offset.value, batchSize);
-      const summaries = response.data.decks as DeckSummary[];
+      const summaries = response.data.decks as Deck[];
       decks.value.push(...summaries);
       hasMore.value = response.data.hasMore;
       offset.value += batchSize;
     } catch (err) {
       console.error('Failed to load more decks:', err);
-    }
-  }
-
-  async function loadDecksBatch(offsetParam = 0, limit = 12) {
-    try {
-      const response = await getDecks(offsetParam, limit);
-      const { decks: newDecks, hasMore: more } = response.data;
-      hasMore.value = more;
-      decks.value.push(...newDecks);
-      ready.value = true;
-    } catch (err) {
-      console.error('Failed to load decks:', err);
-    }
-  }
-
-  async function createNewDeck(title: string) {
-    try {
-      const response = await createDeck({ title });
-      decks.value.unshift(response.data);
-      return response.data;
-    } catch (err) {
-      console.error('Failed to create deck:', err);
-      throw err;
+    } finally {
+      loading.value = false;
     }
   }
 
   async function addDeck(deck: { title: string }) {
     try {
       const response = await createDeck(deck);
-      decks.value.unshift(response.data);
-      return response.data;
+      decks.value.unshift(response.data as Deck);
+      ready.value = true;
+      return response.data as Deck;
     } catch (err) {
-      console.error('Failed to create deck:', err);
+      console.error('Failed to add deck:', err);
       throw err;
     }
   }
 
-  async function updateDeck(updated: DeckSummary | DeckDetail) {
-    const summary = 'cards' in updated ? toSummary(updated) : updated;
+  async function updateDeck(updated: Deck) {
     try {
-      const response = await updateDeckRequest(summary.id, summary);
-      const idx = decks.value.findIndex((d) => d.id === summary.id);
-      if (idx !== -1) decks.value[idx] = response.data;
+      const response = await updateDeckRequest(updated.id, updated);
+      const idx = decks.value.findIndex((d) => d.id === updated.id);
+      if (idx !== -1) decks.value[idx] = response.data as Deck;
     } catch (err) {
       console.error('Failed to update deck:', err);
     }
@@ -129,20 +98,12 @@ export const useDeckStore = defineStore('deckStore', () => {
 
   async function deleteDeck(id: string) {
     try {
-      // Call API to delete
       await deleteDeckRequest(id);
-
-      // Immediately update decks array
       decks.value = decks.value.filter((d) => d.id !== id);
 
-      // Remove detailed info
-      delete deckDetails.value[id];
-
-      // Prevent "Load More" showing if no decks left
       if (decks.value.length === 0) {
         hasMore.value = false;
-        ready.value = true; // mark store ready
-        loading.value = false; // optional, for safety
+        ready.value = false;
       }
     } catch (err) {
       console.error('Failed to delete deck:', err);
@@ -150,28 +111,22 @@ export const useDeckStore = defineStore('deckStore', () => {
     }
   }
 
-  async function fetchDeckWithCards(deckId: string): Promise<DeckDetail> {
+  async function fetchDeck(deckId: string): Promise<Deck> {
     try {
-      const response = await getDeckWithCards(deckId);
-      const deckDetail: DeckDetail = response.data;
+      const response = await getDeck(deckId);
+      const deck: Deck = response.data;
 
-      console.log('loadInitialDecks called');
-
-      // Cache full detail
-      deckDetails.value[deckId] = deckDetail;
-
-      // Update summary
-      const summary = toSummary(deckDetail);
       const idx = decks.value.findIndex((d) => d.id === deckId);
       if (idx !== -1) {
-        decks.value[idx] = summary;
+        decks.value[idx] = deck;
       } else {
-        decks.value.push(summary);
+        decks.value.push(deck);
       }
 
-      return deckDetail;
+      // ⚠️ Do NOT set ready here! It’s a single-deck fetch only
+      return deck;
     } catch (err) {
-      console.error('Failed to fetch deck with cards:', err);
+      console.error('Failed to fetch deck:', err);
       throw err;
     }
   }
@@ -179,7 +134,6 @@ export const useDeckStore = defineStore('deckStore', () => {
   return {
     // State
     decks,
-    deckDetails,
     hasMore,
     loading,
     offset,
@@ -190,12 +144,10 @@ export const useDeckStore = defineStore('deckStore', () => {
     resetStore,
     loadInitialDecks,
     loadMoreDecks,
-    loadDecksBatch,
-    createNewDeck,
     addDeck,
     updateDeck,
     deleteDeck,
-    fetchDeckWithCards,
+    fetchDeck,
 
     // Helper
     isDeckLoaded,
