@@ -16,12 +16,3 @@ export type Deck = {
   dateUpdated: string;
   cardCount: number;
 };
-
-/**
- * @deprecated
- * Only use temporarily in ManagePage.
- * Replace with Deck + Card[] as soon as possible.
- */
-export type DeckDetail = Deck & {
-  cards: Card[];
-};

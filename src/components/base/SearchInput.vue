@@ -29,7 +29,9 @@ defineProps<{
   id?: string;
 }>();
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits<{
+  'update:modelValue': [value: string];
+}>();
 
 const inputEl = ref<HTMLInputElement | null>(null);
 

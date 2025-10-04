@@ -2,12 +2,13 @@
   <Layout>
     <section aria-labelledby="deck-heading">
       <!-- Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
-        <div>
-          <h1 id="deck-heading" class="text-xl font-semibold text-gray-800 dark:text-white">
-            My Flashcard Decks
-          </h1>
-        </div>
+      <div class="flex items-center justify-between mb-6 gap-2 flex-wrap">
+        <h1
+          id="deck-heading"
+          class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white"
+        >
+          My Flashcard Decks
+        </h1>
 
         <BaseButton
           label="Add Deck"
@@ -29,15 +30,12 @@
       <!-- Deck Grid / Skeleton / Empty State -->
       <transition name="fade" mode="out-in">
         <div key="deck-states">
-          <!-- Skeletons: only show while loading, if we expect decks -->
-          <div
-            v-if="loading && !deckStore.ready"
-            class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-          >
-            <DeckSkeleton v-for="n in [...Array(batchSize).keys()]" :key="n" />
+          <!-- Skeletons: show whenever loading -->
+          <div v-if="loading" class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            <DeckSkeleton v-for="n in batchSize" :key="n" />
           </div>
 
-          <!-- Decks Grid -->
+          <!-- Decks: show if filtered decks exist -->
           <div
             v-else-if="filteredDecks.length > 0"
             class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 text-gray-700 dark:text-gray-300"
@@ -45,9 +43,9 @@
             <Deck v-for="deck in filteredDecks" :key="deck.id" :deck="deck" />
           </div>
 
-          <!-- Empty State -->
+          <!-- Empty State: show if no decks / no search matches -->
           <div
-            v-else-if="deckStore.ready"
+            v-else
             class="text-gray-500 dark:text-gray-400 py-8 flex flex-col items-center justify-center gap-4"
           >
             <img
@@ -56,7 +54,7 @@
               class="w-48 h-48 sm:w-56 sm:h-56 object-contain dark:invert"
             />
             <p class="text-sm text-center">
-              {{ decks.length === 0 ? 'No decks found.' : 'No matching decks found.' }}
+              {{ decks.length === 0 ? 'No decks yet.' : 'No matching decks found.' }}
             </p>
           </div>
         </div>
@@ -76,9 +74,9 @@
         cancel-label="Cancel"
         form-id="addDeckForm"
         autofocus-selector="input"
-        @close="showAddDeck = false"
+        @modal-close="closeAddDeckModal"
       >
-        <form id="addDeckForm" class="space-y-4" @submit="submitDeck">
+        <form id="addDeckForm" class="space-y-4" @submit.prevent="submitDeck">
           <label for="deckTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-200">
             Deck Title <span class="text-red-600">*</span>
             <input
@@ -103,12 +101,12 @@ import { PlusIcon } from '@heroicons/vue/20/solid';
 import { storeToRefs } from 'pinia';
 import { onMounted, ref } from 'vue';
 
-import BaseButton from '@/components/BaseButton.vue';
-import BaseModal from '@/components/BaseModal.vue';
-import Deck from '@/components/Deck.vue';
-import DeckSkeleton from '@/components/DeckSkeleton.vue';
-import Layout from '@/components/Layout.vue';
-import SearchInput from '@/components/SearchInput.vue';
+import BaseButton from '@/components/base/BaseButton.vue';
+import BaseModal from '@/components/base/BaseModal.vue';
+import SearchInput from '@/components/base/SearchInput.vue';
+import Deck from '@/components/dashboard/Deck.vue';
+import DeckSkeleton from '@/components/dashboard/DeckSkeleton.vue';
+import Layout from '@/components/layout/Layout.vue';
 import { useSearchFilter } from '@/composables/useSearchFilter';
 import { useToast } from '@/composables/useToast';
 import { useAuthStore } from '@/stores/authStore';
@@ -133,16 +131,14 @@ const newDeckTitle = ref('');
 // Search filter
 const { query: deckSearch, filtered: filteredDecks } = useSearchFilter(decks, ['title']);
 
-// Empty state
+// Empty state illustration
 import emptyDeckSvg from '@/assets/empty_deck.svg';
 const emptyDeckIllustration = emptyDeckSvg;
 
 // Lifecycle
 onMounted(async () => {
   if (authStore.isLoggedIn) {
-    if (!deckStore.ready || decks.value.length < deckStore.batchSize) {
-      await loadInitialDecks();
-    }
+    await loadInitialDecks();
   }
 });
 
@@ -151,11 +147,11 @@ function openAddDeck() {
   showAddDeck.value = true;
 }
 
-async function submitDeck(e: Event) {
-  e.preventDefault();
-  const form = e.target as HTMLFormElement;
-  if (!form.checkValidity()) return;
+function closeAddDeckModal() {
+  showAddDeck.value = false;
+}
 
+async function submitDeck() {
   const title = newDeckTitle.value.trim();
   if (!title) return;
 

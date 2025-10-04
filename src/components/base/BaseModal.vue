@@ -2,7 +2,7 @@
   <teleport to="body">
     <div
       v-if="isOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 sm:px-0"
       role="dialog"
       aria-modal="true"
       :aria-labelledby="labelId"
@@ -26,20 +26,21 @@
 
         <!-- Footer -->
         <footer v-if="showActions" class="mt-6 flex justify-end gap-2">
-          <button
-            type="button"
-            class="px-3 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded hover:bg-gray-300 dark:hover:bg-gray-600 cursor-pointer"
+          <BaseButton
+            v-if="cancelLabel"
+            :label="cancelText"
+            variant="secondary"
             @click="emitClose"
-          >
-            {{ cancelText }}
-          </button>
-          <button
-            :form="formId"
+          />
+
+          <BaseButton
+            v-if="confirmLabel"
+            :label="confirmText"
+            variant="primary"
             type="submit"
-            class="px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
-          >
-            {{ confirmText }}
-          </button>
+            :form="formId"
+            :aria-describedby="props.confirmAriaDescribedBy"
+          />
         </footer>
       </div>
     </div>
@@ -49,6 +50,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
 
+import BaseButton from '@/components/base/BaseButton.vue';
 const props = defineProps<{
   isOpen: boolean;
   title?: string;
@@ -57,9 +59,12 @@ const props = defineProps<{
   confirmLabel?: string;
   cancelLabel?: string;
   formId?: string;
+  confirmAriaDescribedBy?: string;
 }>();
 
-const emit = defineEmits(['close']);
+const emit = defineEmits<{
+  'modal-close': [];
+}>();
 
 const labelId = computed(() => `modal-title-${Math.random().toString(36).slice(2)}`);
 const modalContent = ref<HTMLElement | null>(null);
@@ -68,20 +73,24 @@ const confirmText = computed(() => props.confirmLabel ?? 'Confirm');
 const cancelText = computed(() => props.cancelLabel ?? 'Cancel');
 
 function emitClose() {
-  emit('close');
+  emit('modal-close');
 }
 
+// Autofocus logic
 watch(
   () => props.isOpen,
   async (open) => {
     if (open) {
       await nextTick();
+      let target: HTMLElement | null = null;
+
       if (props.autofocusSelector && modalContent.value) {
-        const target = modalContent.value.querySelector<HTMLElement>(props.autofocusSelector);
-        target?.focus();
-      } else {
-        modalContent.value?.focus();
+        target = modalContent.value.querySelector<HTMLElement>(props.autofocusSelector);
+      } else if (modalContent.value) {
+        target = modalContent.value.querySelector<HTMLElement>('input, textarea, select, button');
       }
+
+      target?.focus();
     }
   }
 );

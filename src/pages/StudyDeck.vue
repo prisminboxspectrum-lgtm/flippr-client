@@ -2,12 +2,16 @@
   <Layout>
     <!-- Header -->
     <div class="flex items-center justify-between mb-6 gap-2 flex-wrap">
-      <h1 id="study-heading" class="text-xl font-semibold text-gray-800 dark:text-white">
+      <h1
+        id="study-heading"
+        class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white"
+      >
         Study Deck
       </h1>
+
       <RouterLink
         to="/dashboard"
-        class="text-base sm:text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 px-2 py-2 rounded"
+        class="text-sm sm:text-base text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 px-2 py-1 rounded"
         aria-label="Return to dashboard"
       >
         ← Back to Dashboard
@@ -20,20 +24,19 @@
         class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2"
         aria-live="polite"
       >
-        <!-- Deck skeleton -->
-        <div v-if="showDeckSkeleton" role="status" aria-live="polite">
+        <div v-if="showDeckSkeleton" role="status">
           <div class="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-2 animate-pulse"></div>
           <div class="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
         </div>
 
         <div v-else-if="deck">
           <h2
-            class="text-lg font-semibold text-gray-700 dark:text-white truncate"
+            class="text-lg sm:text-xl font-semibold text-gray-700 dark:text-white truncate max-w-full"
             :title="deck.title"
           >
             {{ deck.title }}
           </h2>
-          <p class="text-sm text-gray-600 dark:text-gray-400" aria-live="polite">
+          <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1" aria-live="polite">
             Card {{ currentIndex + 1 }} of {{ cards.length }}
           </p>
         </div>
@@ -62,13 +65,7 @@
 
     <!-- Study Area -->
     <section class="flex flex-col items-center justify-center flex-1 text-center">
-      <!-- Cards skeleton -->
-      <div
-        v-if="showCardSkeleton"
-        class="w-full max-w-md space-y-4"
-        role="status"
-        aria-live="polite"
-      >
+      <div v-if="showCardSkeleton" class="w-full max-w-md space-y-4" role="status">
         <div class="h-64 sm:h-72 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
         <div class="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
         <div class="flex gap-4 justify-center">
@@ -135,7 +132,6 @@
           :aria-valuemin="1"
           :aria-valuemax="cards.length"
           aria-label="Study progress"
-          aria-live="polite"
         >
           <div
             class="h-full bg-blue-600 dark:bg-blue-500 transition-all duration-300"
@@ -169,12 +165,7 @@
         </div>
       </div>
 
-      <div
-        v-else
-        class="flex items-center justify-center min-h-[70vh] text-center"
-        role="status"
-        aria-live="polite"
-      >
+      <div v-else class="flex items-center justify-center min-h-[70vh] text-center" role="status">
         <p class="text-gray-600 dark:text-gray-300">No cards to study.</p>
       </div>
     </section>
@@ -186,30 +177,20 @@ import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/vue/24/solid';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
-import BaseButton from '@/components/BaseButton.vue';
-import Layout from '@/components/Layout.vue';
-import { useCardStore } from '@/stores/cardStore';
-import { useDeckStore } from '@/stores/deckStore';
+import BaseButton from '@/components/base/BaseButton.vue';
+import Layout from '@/components/layout/Layout.vue';
+import { useFetchDeckAndCards } from '@/composables/useFetchDeckAndCards';
 
 const route = useRoute();
 const deckId = String(route.params.id);
 
-const deckStore = useDeckStore();
-const cardStore = useCardStore();
+// Fetch deck & cards
+const { deck, cards, showDeckSkeleton, showCardSkeleton, fetchDeckAndCards } =
+  useFetchDeckAndCards(deckId);
 
-const deck = computed(() => deckStore.decks.find((d) => d.id === deckId) ?? null);
-const cards = computed(() => cardStore.getCards(deckId));
-
+// Study-specific state
 const currentIndex = ref(0);
 const showAnswer = ref(false);
-
-// Skeleton logic
-const showDeckSkeleton = computed(() => deckStore.loading || !deck.value);
-const showCardSkeleton = computed(
-  () => cardStore.isLoading || !deck.value || cards.value.length === 0
-);
-
-// Current card
 const currentCard = computed(() => cards.value[currentIndex.value]);
 
 // Touch support
@@ -259,27 +240,6 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
-onMounted(async () => {
-  window.addEventListener('keydown', handleKeydown, { passive: false });
-
-  try {
-    if (!deckStore.isDeckLoaded(deckId)) deckStore.loading = true;
-    if (!cardStore.isCardsLoaded(deckId)) cardStore.isLoading = true;
-
-    await Promise.all([
-      deckStore.isDeckLoaded(deckId) ? null : deckStore.fetchDeck(deckId),
-      cardStore.isCardsLoaded(deckId) ? null : cardStore.fetchCards(deckId),
-    ]);
-  } finally {
-    deckStore.loading = false;
-    cardStore.isLoading = false;
-  }
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener('keydown', handleKeydown);
-});
-
 function handleTouchStart(e: TouchEvent) {
   touchStartX.value = e.changedTouches[0].screenX;
 }
@@ -289,6 +249,15 @@ function handleTouchEnd(e: TouchEvent) {
   const deltaX = touchEndX.value - touchStartX.value;
   if (Math.abs(deltaX) > 50) deltaX > 0 ? prevCard() : nextCard();
 }
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown, { passive: false });
+  fetchDeckAndCards();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown);
+});
 </script>
 
 <style>

@@ -1,22 +1,20 @@
+// eslint.config.js
 import js from '@eslint/js';
 import vue from 'eslint-plugin-vue';
-import typescript from '@typescript-eslint/eslint-plugin';
-import parser from '@typescript-eslint/parser';
+import tsPlugin from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
 import prettier from 'eslint-plugin-prettier';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import vueParser from 'vue-eslint-parser';
-import vueTsConfig from '@vue/eslint-config-typescript';
 
 export default [
   js.configs.recommended,
-  vue.configs.recommended,
-  vueTsConfig,
   {
     files: ['**/*.vue'],
     languageOptions: {
       parser: vueParser,
       parserOptions: {
-        parser, // for <script lang="ts">
+        parser: tsParser, // for <script lang="ts">
         ecmaVersion: 2020,
         sourceType: 'module',
       },
@@ -38,7 +36,7 @@ export default [
     },
     plugins: {
       vue,
-      '@typescript-eslint': typescript,
+      '@typescript-eslint': tsPlugin,
       prettier,
       'simple-import-sort': simpleImportSort,
     },
@@ -54,9 +52,11 @@ export default [
   {
     files: ['**/*.ts'],
     languageOptions: {
-      parser,
-      ecmaVersion: 2020,
-      sourceType: 'module',
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: 2020,
+        sourceType: 'module',
+      },
       globals: {
         window: true,
         document: true,
@@ -74,7 +74,7 @@ export default [
       },
     },
     plugins: {
-      '@typescript-eslint': typescript,
+      '@typescript-eslint': tsPlugin,
       prettier,
       'simple-import-sort': simpleImportSort,
     },

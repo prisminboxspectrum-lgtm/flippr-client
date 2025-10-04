@@ -9,12 +9,10 @@
         >
           {{ deck.title }}
         </h2>
-
         <div
           v-else
           class="h-6 w-32 sm:w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"
         ></div>
-
         <button
           v-if="deck && !showSkeleton"
           type="button"
@@ -25,21 +23,19 @@
           <PencilIcon class="h-4 w-4" aria-hidden="true" />
         </button>
       </template>
-
       <template v-else>
         <input
           ref="inputRef"
           v-model="editedTitle"
           type="text"
           maxLength="50"
-          class="inline-block w-auto max-w-full min-w-[4ch] text-lg sm:text-xl font-semibold bg-transparent dark:bg-transparent px-1 border-b border-gray-400 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="inline-block w-auto max-w-full min-w-[4ch] text-lg sm:text-xl font-semibold bg-transparent dark:bg-transparent px-1 border-gray-400 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           @blur="saveTitle"
           @keyup.enter="saveTitle"
           aria-label="Edit deck title"
         />
       </template>
     </div>
-
     <!-- Card Count -->
     <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
       <span
@@ -53,7 +49,7 @@
 
 <script setup lang="ts">
 import { PencilIcon } from '@heroicons/vue/24/solid';
-import { computed, defineEmits, defineProps, nextTick, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 
 import type { Deck } from '@/types/types';
 
@@ -64,7 +60,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (event: 'updateTitle', newTitle: string): void;
+  'deck-update-title': [newTitle: string];
 }>();
 
 // Title editing state
@@ -89,9 +85,8 @@ function startEditing() {
 function saveTitle() {
   if (!props.deck) return;
   const newTitle = editedTitle.value.trim() || 'Untitled Deck';
-
   if (newTitle !== props.deck.title) {
-    emit('updateTitle', newTitle);
+    emit('deck-update-title', newTitle);
   }
   editedTitle.value = newTitle;
   isEditing.value = false;

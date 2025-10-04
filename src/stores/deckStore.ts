@@ -53,7 +53,7 @@ export const useDeckStore = defineStore('deckStore', () => {
       console.error('Failed to load decks:', err);
     } finally {
       loading.value = false;
-      ready.value = decks.value.length > 0;
+      ready.value = true;
     }
   }
 
@@ -123,7 +123,6 @@ export const useDeckStore = defineStore('deckStore', () => {
         decks.value.push(deck);
       }
 
-      // ⚠️ Do NOT set ready here! It’s a single-deck fetch only
       return deck;
     } catch (err) {
       console.error('Failed to fetch deck:', err);

@@ -47,7 +47,7 @@
 import { PencilSquareIcon, PlayIcon } from '@heroicons/vue/24/solid';
 import { useRouter } from 'vue-router';
 
-import BaseButton from '@/components/BaseButton.vue';
+import BaseButton from '@/components/base/BaseButton.vue';
 import type { Deck } from '@/types/types';
 
 const props = defineProps<{

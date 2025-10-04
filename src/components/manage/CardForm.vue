@@ -56,7 +56,9 @@ const props = defineProps<{
   modelValue: Card;
 }>();
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits<{
+  'update:modelValue': [value: Card];
+}>();
 
 const card = computed({
   get: () => props.modelValue,

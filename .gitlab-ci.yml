@@ -1,0 +1,35 @@
+stages:
+  - lint
+  - test
+
+variables:
+  NODE_ENV: test
+  CI: 'true'
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - node_modules/
+
+# Lint job
+lint:
+  image: node:20-alpine
+  stage: lint
+  script:
+    - npm ci
+    - npm run lint
+  allow_failure: false
+
+# Test job
+test:
+  image: node:20-alpine
+  stage: test
+  script:
+    - npm ci
+    - npm run test:ci
+  artifacts:
+    when: always
+    reports:
+      junit: reports/junit.xml
+    paths:
+      - coverage/

@@ -148,7 +148,7 @@ import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline';
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import BaseButton from '@/components/BaseButton.vue';
+import BaseButton from '@/components/base/BaseButton.vue';
 import { useAuthForm } from '@/composables/useAuthForm';
 import { useAuthStore } from '@/stores/authStore';
 

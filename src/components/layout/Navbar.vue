@@ -45,30 +45,10 @@
               Logout
             </button>
 
-            <!-- Dark mode toggle -->
-            <div
-              class="flex items-center gap-3 ml-2 pl-4 border-l border-gray-300 dark:border-gray-600"
-            >
-              <button
-                :class="[
-                  'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out',
-                  isDark ? 'bg-blue-600' : 'bg-gray-300',
-                ]"
-                role="switch"
-                :aria-checked="isDark"
-                :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
-                @click="toggle"
-              >
-                <span class="sr-only">Toggle dark mode</span>
-                <span
-                  :class="[
-                    'inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-200 ease-in-out',
-                    isDark ? 'translate-x-6' : 'translate-x-1',
-                  ]"
-                ></span>
-              </button>
-              <span class="font-medium text-gray-700 dark:text-gray-300">Dark Mode</span>
-            </div>
+            <!-- Dark mode toggle (desktop) -->
+            <DarkModeToggle
+              wrapperClass="ml-2 pl-4 border-l border-gray-300 dark:border-gray-600"
+            />
           </div>
         </div>
       </div>
@@ -94,30 +74,10 @@
               Logout
             </button>
 
-            <!-- Dark mode toggle - Mobile -->
-            <div
-              class="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-600"
-            >
-              <span class="font-medium text-gray-700 dark:text-gray-200">Dark Mode</span>
-              <button
-                :class="[
-                  'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out',
-                  isDark ? 'bg-blue-600' : 'bg-gray-300',
-                ]"
-                role="switch"
-                :aria-checked="isDark"
-                :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
-                @click="toggle"
-              >
-                <span class="sr-only">Toggle dark mode</span>
-                <span
-                  :class="[
-                    'inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-200 ease-in-out',
-                    isDark ? 'translate-x-6' : 'translate-x-1',
-                  ]"
-                ></span>
-              </button>
-            </div>
+            <!-- Dark mode toggle (mobile) -->
+            <DarkModeToggle
+              wrapperClass="justify-between pt-3 border-t border-gray-200 dark:border-gray-600"
+            />
           </div>
         </div>
       </transition>
@@ -130,12 +90,11 @@ import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { useTheme } from '@/composables/useTheme';
+import DarkModeToggle from '@/components/layout/DarkModeToggle.vue';
 import { useAuthStore } from '@/stores/authStore';
 
 const router = useRouter();
 const isOpen = ref(false);
-const { isDark, toggle } = useTheme();
 const authStore = useAuthStore();
 
 function logout() {
