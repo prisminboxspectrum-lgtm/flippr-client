@@ -76,7 +76,6 @@ function emitClose() {
   emit('modal-close');
 }
 
-// Autofocus logic
 watch(
   () => props.isOpen,
   async (open) => {
